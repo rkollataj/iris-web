@@ -1219,7 +1219,7 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                           <span aria-hidden="true"><i class="fa-solid fa-link"></i>#${case_}</span>
                       </a>
                       <div class="dropdown-menu">
-                        <a class="dropdown-item" href="/case?cid=${case_}" target="_blank"><i class="fa-solid fa-eye mr-2"></i> View case #${case_}</a>    
+                        <a class="dropdown-item" href="${window.IRIS_BASE_PATH || ''}/case?cid=${case_}" target="_blank"><i class="fa-solid fa-eye mr-2"></i> View case #${case_}</a>    
                         <div class="dropdown-divider"></div>
                         <a class="dropdown-item text-danger" href="javascript:void(0)" onclick="unlinkAlertFromCase(${alert.alert_id}, ${case_})"><i class="fa-solid fa-unlink mr-2"></i>Unlink alert from case #${case_}</a>
                       </div>

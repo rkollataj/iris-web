@@ -86,7 +86,7 @@ function remove_case(id) {
                                 dangerMode: false
                             })
                             setTimeout(function () {
-                                window.location.href = '/dashboard?cid=1';
+                                window.location.href = (window.IRIS_BASE_PATH || '') + '/dashboard?cid=1';
                             }, 4500);
                         } else {
                             refresh_case_table();

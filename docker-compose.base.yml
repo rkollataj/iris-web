@@ -62,6 +62,7 @@ services:
       - POSTGRES_PORT
       - IRIS_SECRET_KEY
       - IRIS_SECURITY_PASSWORD_SALT
+      - IRIS_BASE_PATH=${IRIS_BASE_PATH:-/iris}
     networks:
       - iris_backend
       - iris_frontend
@@ -93,6 +94,7 @@ services:
       - IRIS_SECRET_KEY
       - IRIS_SECURITY_PASSWORD_SALT
       - IRIS_WORKER
+      - IRIS_BASE_PATH=${IRIS_BASE_PATH:-/iris}
     networks:
       - iris_backend
 
@@ -106,6 +108,7 @@ services:
       - CERT_FILENAME
       - KEY_FILENAME
       - IRIS_AUTHENTICATION_TYPE
+      - IRIS_BASE_PATH=${IRIS_BASE_PATH:-/iris}
     networks:
       - iris_frontend
     ports:

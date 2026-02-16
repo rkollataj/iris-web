@@ -1,6 +1,7 @@
 /* reload the asset table */
 g_asset_id = null;
 g_asset_desc_editor = null;
+const IRIS_BASE_PATH = window.IRIS_BASE_PATH || "";
 
 
 function reload_assets() {
@@ -389,8 +390,8 @@ $(document).ready(function(){
                         let datacontent = 'data-content="';
 
                         row.link.forEach(link => {
-                            const caseInfo = `<b><a target='_blank' rel='noopener' href='/case/assets?cid=${link.case_id}&shared=${link.asset_id}'>Observed <sup><i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-1 text-muted'></i></sup></a></b>`;
-                            const caseLink = `<b><a href='/case?cid=${link.case_id}'>case #${link.case_id} <sup><i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-1 text-muted'></i></sup></a></b>`;
+                            const caseInfo = `<b><a target='_blank' rel='noopener' href='${IRIS_BASE_PATH}/case/assets?cid=${link.case_id}&shared=${link.asset_id}'>Observed <sup><i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-1 text-muted'></i></sup></a></b>`;
+                            const caseLink = `<b><a href='${IRIS_BASE_PATH}/case?cid=${link.case_id}'>case #${link.case_id} <sup><i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-1 text-muted'></i></sup></a></b>`;
                             const date = link.case_open_date.replace('00:00:00 GMT', '');
 
                             if (link.asset_compromise_status_id === 1) {
@@ -408,9 +409,9 @@ $(document).ready(function(){
                         let alerts_content = "";
 
                         row.alerts.forEach(alert => {
-                            alerts_content += `<i tabindex="0" class="fas fa-bell text-warning mr-2"></i><a href=\"/alerts?alert_ids=${alert.alert_id}&page=1&per_page=1&sort=desc\" target="_blank" rel="noopener">#${alert.alert_id} - ${alert.alert_title.replace(/'/g, "&#39;").replace(/"/g, "&quot;")}</a><br/>`;
+                            alerts_content += `<i tabindex="0" class="fas fa-bell text-warning mr-2"></i><a href=\"${IRIS_BASE_PATH}/alerts?alert_ids=${alert.alert_id}&page=1&per_page=1&sort=desc\" target="_blank" rel="noopener">#${alert.alert_id} - ${alert.alert_title.replace(/'/g, "&#39;").replace(/"/g, "&quot;")}</a><br/>`;
                         }  );
-                        alerts_content += `<i tabindex="0" class="fas fa-external-link-square mr-2"></i><a href=\"/alerts?alert_assets=${data}" target="_blank" rel="noopener">More..</a>`;
+                        alerts_content += `<i tabindex="0" class="fas fa-external-link-square mr-2"></i><a href=\"${IRIS_BASE_PATH}/alerts?alert_assets=${data}" target="_blank" rel="noopener">More..</a>`;
 
 
                         compro += `<i tabindex="0" class="fas fa-bell text-warning ml-2" style="cursor: pointer;" data-html="true" data-toggle="popover" data-trigger="focus" title="Alerts" data-content='${alerts_content}'></i>`;
@@ -419,7 +420,7 @@ $(document).ready(function(){
                     let img = $('<img>')
                         .addClass('mr-2')
                         .css({width: '1.5em', height: '1.5em'})
-                        .attr('src', '/static/assets/img/graph/' + (row['asset_compromise_status_id'] == 1 ? row['asset_type']['asset_icon_compromised'] : row['asset_type']['asset_icon_not_compromised']))
+                        .attr('src', IRIS_BASE_PATH + '/static/assets/img/graph/' + (row['asset_compromise_status_id'] == 1 ? row['asset_type']['asset_icon_compromised'] : row['asset_type']['asset_icon_not_compromised']))
                         .attr('title', row['asset_type']['asset_name']);
 
                     let link = $('<a>')

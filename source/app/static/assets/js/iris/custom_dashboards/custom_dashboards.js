@@ -1,5 +1,6 @@
 (function ($) {
-  const apiBase = '/custom-dashboards/api/dashboards';
+  const IRIS_BASE_PATH = window.IRIS_BASE_PATH || '';
+  const apiBase = IRIS_BASE_PATH + '/custom-dashboards/api/dashboards';
   const DEFAULT_RANGE_DAYS = 30;
   const DASHBOARD_AUTO_REFRESH_INTERVAL_MS = 60000;
   const DASHBOARD_STATE_STORAGE_KEY = 'iris.customDashboards.state';
@@ -8,7 +9,7 @@
   ];
 
   const COLOR_PICKER_FALLBACK = '#4e73df';
-  const WIDGET_PRESETS_URL = '/static/assets/js/iris/custom_dashboards/widget_presets.json';
+  const WIDGET_PRESETS_URL = IRIS_BASE_PATH + '/static/assets/js/iris/custom_dashboards/widget_presets.json';
   let widgetPresetsCache = null;
   let widgetPresetsMap = null;
   let widgetPresetsLoadPromise = null;

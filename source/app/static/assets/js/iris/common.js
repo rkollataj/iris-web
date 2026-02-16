@@ -18,6 +18,31 @@ $.fn.serializeObject = function() {
 var jdata_menu_options = [];
 let current_cid = null;
 
+function iris_with_base_path(uri) {
+    const basePath = window.IRIS_BASE_PATH || "";
+    if (!uri || !basePath || typeof uri !== 'string') {
+        return uri;
+    }
+
+    if (uri.startsWith('http://') || uri.startsWith('https://') || uri.startsWith('//')) {
+        return uri;
+    }
+
+    if (uri === basePath || uri.startsWith(basePath + '/')) {
+        return uri;
+    }
+
+    if (uri.startsWith('/')) {
+        return basePath + uri;
+    }
+
+    return uri;
+}
+
+$.ajaxPrefilter(function(options) {
+    options.url = iris_with_base_path(options.url);
+});
+
 function clear_api_error() {
    $(".invalid-feedback").hide();
 }
@@ -521,7 +546,7 @@ function check_update(url) {
                         }
                     });
                 } else if (data.status == 403) {
-                    window.location.replace("/case" + case_param());
+                    window.location.replace(iris_with_base_path("/case" + case_param()));
                 } else if (data.status == 400) {
 
                 } else {
@@ -1436,14 +1461,14 @@ function send_add_case(data_sent) {
                 switch (value) {
 
                     case "dash":
-                        window.location.replace("/dashboard" + case_param());
+                        window.location.replace(iris_with_base_path("/dashboard" + case_param()));
                         break;
 
                     case 'go_case':
-                        window.location.replace("/case?cid=" + case_id);
+                        window.location.replace(iris_with_base_path("/case?cid=" + case_id));
 
                     default:
-                        window.location.replace("/case?cid=" + case_id);
+                        window.location.replace(iris_with_base_path("/case?cid=" + case_id));
                 }
             });
         }
@@ -1866,5 +1891,3 @@ $(document).ready(function(){
 
     userWhoamiRequest();
 });
-
-

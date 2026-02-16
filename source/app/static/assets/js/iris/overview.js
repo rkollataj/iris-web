@@ -389,10 +389,10 @@ function show_case_view(row_index) {
     owner_dl2.append($('<dt class="col-sm-3"/>').text('SOC ID:'));
     owner_dl2.append($('<dd class="col-sm-8"/>').text(case_data.soc_id !== '' ? case_data.soc_id : 'None'));
     owner_dl2.append($('<dt class="col-sm-3"/>').text('Related alerts:'));
-    owner_dl2.append($('<dd class="col-sm-8"/>').html(`<a target="_blank" rel="noopener" href='/alerts?case_id=${case_data.case_id}'>${case_data.alerts.length} related alert(s) <i class="fa-solid fa-up-right-from-square ml-2"></i></a>`));
+    owner_dl2.append($('<dd class="col-sm-8"/>').html(`<a target="_blank" rel="noopener" href='${window.IRIS_BASE_PATH || ''}/alerts?case_id=${case_data.case_id}'>${case_data.alerts.length} related alert(s) <i class="fa-solid fa-up-right-from-square ml-2"></i></a>`));
     owner_dl2.append($('<dt class="col-sm-3"/>').text('Tasks:'));
     if (case_data.tasks_status != null) {
-        owner_dl2.append($('<dd class="col-sm-8"/>').html(`<a target="_blank" rel="noopener" href='/case/tasks?cid=${case_data.case_id}'>${case_data.tasks_status.closed_tasks}/${case_data.tasks_status.open_tasks + case_data.tasks_status.closed_tasks} task(s) <i class="fa-solid fa-up-right-from-square ml-2"></i></a>`));
+        owner_dl2.append($('<dd class="col-sm-8"/>').html(`<a target="_blank" rel="noopener" href='${window.IRIS_BASE_PATH || ''}/case/tasks?cid=${case_data.case_id}'>${case_data.tasks_status.closed_tasks}/${case_data.tasks_status.open_tasks + case_data.tasks_status.closed_tasks} task(s) <i class="fa-solid fa-up-right-from-square ml-2"></i></a>`));
     } else {
         owner_dl2.append($('<dd class="col-sm-8"/>').text('No tasks'));
     }
@@ -413,7 +413,7 @@ function show_case_view(row_index) {
     owner_row.append(owner_col1);
     owner_row.append(owner_col2);
     owner_body.append(owner_row);
-    owner_body.append(`<a type="button" class="btn btn-sm btn-dark float-right" target="_blank" rel="noopener" href='/case?cid=${case_data.case_id}'><i class="fa-solid fa-up-right-from-square mr-2"></i> View case</a>`);
+    owner_body.append(`<a type="button" class="btn btn-sm btn-dark float-right" target="_blank" rel="noopener" href='${window.IRIS_BASE_PATH || ''}/case?cid=${case_data.case_id}'><i class="fa-solid fa-up-right-from-square mr-2"></i> View case</a>`);
 
     owner_card.append(owner_body);
     body.append(owner_card);

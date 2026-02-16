@@ -702,7 +702,7 @@ $(document).ready(function() {
                   "data": "name",
                   "render": function (data, type, row, meta) {
                     if (type === 'display') {
-                        data = `<a  href="/case?cid=${row['case_id']}">${sanitizeHTML(data)}</a>`;
+                        data = `<a  href="${window.IRIS_BASE_PATH || ''}/case?cid=${row['case_id']}">${sanitizeHTML(data)}</a>`;
                     }
                     return data;
                     }

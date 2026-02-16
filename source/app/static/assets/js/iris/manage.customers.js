@@ -59,7 +59,7 @@ $(document).ready(function() {
                     "render": function (data, type, row) {
                         if (type === 'display') {
                             data = sanitizeHTML(data);
-                            return '<a href="/manage/customers/' + row['customer_id'] + '/view'+ cid +'">' + data + '</a>';
+                            return '<a href="' + (window.IRIS_BASE_PATH || '') + '/manage/customers/' + row['customer_id'] + '/view'+ cid +'">' + data + '</a>';
                         }
                         return data;
                     }
@@ -138,7 +138,7 @@ function delete_customer(id) {
             post_request_api('/manage/customers/delete/' + id)
             .done((data) => {
                 if(notify_auto_api(data)) {
-                    window.location.href = '/manage/customers' + case_param();
+                    window.location.href = (window.IRIS_BASE_PATH || '') + '/manage/customers' + case_param();
                 }
             });
         } else {

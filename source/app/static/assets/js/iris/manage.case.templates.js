@@ -153,7 +153,7 @@ function delete_case_template(id) {
             post_request_api('/manage/case-templates/delete/' + id)
             .done((data) => {
                 if(notify_auto_api(data)) {
-                    window.location.href = '/manage/case-templates' + case_param();
+                    window.location.href = (window.IRIS_BASE_PATH || '') + '/manage/case-templates' + case_param();
                 }
             });
         } else {

@@ -89,15 +89,15 @@ function send_update_case_data() {
                 switch (value) {
 
                     case "dash":
-                        window.location.replace("/dashboard" + case_param());
+                        window.location.replace(iris_with_base_path("/dashboard" + case_param()));
                         break;
 
                     case "again":
-                        window.location.replace("/case" + case_param());
+                        window.location.replace(iris_with_base_path("/case" + case_param()));
                         break;
 
                     default:
-                        window.location.replace("/case" + case_param());
+                        window.location.replace(iris_with_base_path("/case" + case_param()));
                 }
             });
         } else {
