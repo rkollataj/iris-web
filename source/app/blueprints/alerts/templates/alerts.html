@@ -3,10 +3,10 @@
 {% block title %} Alerts {% endblock title %}
 
 {% block stylesheets %}
-    <link rel="stylesheet" href="/static/assets/css/suggestags.css">
-    <link rel="stylesheet" href="/static/assets/css/alerts.css">
-    <link rel="stylesheet" href="/static/assets/css/vis.graph.css">
-    <link rel="stylesheet" href="/static/assets/css/vis.min.css">
+    <link rel="stylesheet" href="{{ request.script_root }}/static/assets/css/suggestags.css">
+    <link rel="stylesheet" href="{{ request.script_root }}/static/assets/css/alerts.css">
+    <link rel="stylesheet" href="{{ request.script_root }}/static/assets/css/vis.graph.css">
+    <link rel="stylesheet" href="{{ request.script_root }}/static/assets/css/vis.min.css">
 
 {% endblock stylesheets %}
 
@@ -366,10 +366,10 @@
 {% endblock content %}
 
 {% block javascripts %}
-    <script src="/static/assets/js/plugin/vis/vis.min.js"></script>
-    <script src="/static/assets/js/plugin/vis/vis-network.min.js"></script>
-    <script src="/static/assets/js/iris/alerts.js"></script>
-    <script src="/static/assets/js/iris/comments.js"></script>
-    <script src="/static/assets/js/core/socket.io.js"></script>
+    <script src="{{ request.script_root }}/static/assets/js/plugin/vis/vis.min.js"></script>
+    <script src="{{ request.script_root }}/static/assets/js/plugin/vis/vis-network.min.js"></script>
+    <script src="{{ request.script_root }}/static/assets/js/iris/alerts.js"></script>
+    <script src="{{ request.script_root }}/static/assets/js/iris/comments.js"></script>
+    <script src="{{ request.script_root }}/static/assets/js/core/socket.io.js"></script>
 {% endblock javascripts %}
 

@@ -1,9 +1,9 @@
 {% extends "layouts/default_ext.html" %} {% block title %} Case summary {% endblock title %}
 {% block stylesheets %}
 {% include 'includes/header_case.html' %}
-<link rel="stylesheet" href="/static/assets/css/select2.css">
-<link rel="stylesheet" href="/static/assets/css/bootstrap-multiselect.min.css">
-<link rel="stylesheet" href="/static/assets/css/bootstrap-select.min.css">
+<link rel="stylesheet" href="{{ request.script_root }}/static/assets/css/select2.css">
+<link rel="stylesheet" href="{{ request.script_root }}/static/assets/css/bootstrap-multiselect.min.css">
+<link rel="stylesheet" href="{{ request.script_root }}/static/assets/css/bootstrap-select.min.css">
 {% endblock stylesheets %}
 {% block content %}
 {% if current_user.is_authenticated %}
@@ -63,7 +63,7 @@
                             <div class="row ml-1">
                                 {% if case.state %}<h5 title="Case state" onclick="case_detail('{{ case.case_id }}', true);" style="cursor:pointer;"><span class="btn-rounded badge-pill hidden-caret btn-sm btn-light" title="Case state"><i class="fa-solid fa-business-time  mr-1"></i> {{ case.state.state_name }}</span></h5>{% endif %}
                                 {% if case.classification %}<h5 title="Classification" onclick="case_detail('{{ case.case_id }}', true);" style="cursor:pointer;"><span class="btn-rounded badge-pill hidden-caret btn-sm btn-light ml-2"><i class="fa-solid fa-shield-virus mr-1"></i>{{ case.classification.name_expanded }}</span></h5>{% endif %}
-                                {% if case.alerts| length > 0 %}<h5 title="Alerts"><a class="btn-rounded badge-pill hidden-caret btn-sm btn-dark ml-2 bg-warning-gradient text-dark" href="/alerts?cid={{ case.case_id }}&sort=desc&case_id={{ case.case_id }}" target="_blank" rel="noopener"><i class="fa-solid fa-bell mr-1"></i> {{ case.alerts| length }} related alerts</a></h5>{% endif %}
+                                {% if case.alerts| length > 0 %}<h5 title="Alerts"><a class="btn-rounded badge-pill hidden-caret btn-sm btn-dark ml-2 bg-warning-gradient text-dark" href="{{ request.script_root }}/alerts?cid={{ case.case_id }}&sort=desc&case_id={{ case.case_id }}" target="_blank" rel="noopener"><i class="fa-solid fa-bell mr-1"></i> {{ case.alerts| length }} related alerts</a></h5>{% endif %}
                                 {% if case.review_status.status_name == "Reviewed" %}
                                 <h5 title="Reviewed"> <a class="text-white btn-rounded badge-pill hidden-caret btn-sm ml-2 badge-success"><i class="fa-regular fa-circle-check mr-2"></i>Case reviewed by {% if case.reviewer.id == current_user.id %} you {% else %} {{ case.reviewer.name }} {% endif %}</a></h5>
                                 {% endif %}
@@ -177,7 +177,7 @@
                           {% if reports| length == 0 %}
                               <div class="alert alert-warning" role="alert">
                                   <h4 class="alert-heading">No report template found</h4>
-                                  <p>Report templates are configured in <a href="/manage/templates?cid={{case.case_id}}">the management section</a>.</p>
+                                  <p>Report templates are configured in <a href="{{ request.script_root }}/manage/templates?cid={{case.case_id}}">the management section</a>.</p>
                               </div>
                           {% else %}
                           <div class="col">
@@ -220,7 +220,7 @@
                           {% if reports| length == 0 %}
                               <div class="alert alert-warning" role="alert">
                                   <h4 class="alert-heading">No report template found</h4>
-                                  <p>Report templates are configured in <a href="/manage/templates?cid={{case.case_id}}">the management section</a>.</p>
+                                  <p>Report templates are configured in <a href="{{ request.script_root }}/manage/templates?cid={{case.case_id}}">the management section</a>.</p>
                               </div>
                           {% else %}
                               <div class="col">
@@ -321,20 +321,20 @@
 {% include 'includes/footer.html' %}
 {% endif %} {% endblock content %} {% block javascripts %}
 
-<script src="/static/assets/js/plugin/ace/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
-<script src="/static/assets/js/plugin/ace/src-noconflict/ext-language_tools.js" type="text/javascript" charset="utf-8"></script>
-<script src="/static/assets/js/core/socket.io.js"></script>
-<script src="/static/assets/js/plugin/select/select2.js"></script>
+<script src="{{ request.script_root }}/static/assets/js/plugin/ace/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
+<script src="{{ request.script_root }}/static/assets/js/plugin/ace/src-noconflict/ext-language_tools.js" type="text/javascript" charset="utf-8"></script>
+<script src="{{ request.script_root }}/static/assets/js/core/socket.io.js"></script>
+<script src="{{ request.script_root }}/static/assets/js/plugin/select/select2.js"></script>
 
-<script src="/static/assets/js/plugin/showdown/showdown.min.js"></script>
-<script src="/static/assets/js/iris/crc32.js"></script>
-<script src="/static/assets/js/iris/datatablesUtils.js"></script>
-<script src="/static/assets/js/iris/case.js"></script>
-<script src="/static/assets/js/iris/manage.cases.common.js"></script>
-<script src="/static/assets/js/iris/case.common.js"></script>
-<script src="/static/assets/js/iris/case.summary.js"></script>
-<script src="/static/assets/js/plugin/select/bootstrap-select.min.js"></script>
-<script src="/static/assets/js/plugin/select/bootstrap-multiselect.min.js"></script>
+<script src="{{ request.script_root }}/static/assets/js/plugin/showdown/showdown.min.js"></script>
+<script src="{{ request.script_root }}/static/assets/js/iris/crc32.js"></script>
+<script src="{{ request.script_root }}/static/assets/js/iris/datatablesUtils.js"></script>
+<script src="{{ request.script_root }}/static/assets/js/iris/case.js"></script>
+<script src="{{ request.script_root }}/static/assets/js/iris/manage.cases.common.js"></script>
+<script src="{{ request.script_root }}/static/assets/js/iris/case.common.js"></script>
+<script src="{{ request.script_root }}/static/assets/js/iris/case.summary.js"></script>
+<script src="{{ request.script_root }}/static/assets/js/plugin/select/bootstrap-select.min.js"></script>
+<script src="{{ request.script_root }}/static/assets/js/plugin/select/bootstrap-multiselect.min.js"></script>
 
 <script>
     $('#modal_select_report').selectpicker();

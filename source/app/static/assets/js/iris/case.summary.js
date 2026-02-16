@@ -14,7 +14,7 @@ var editor = ace.edit("editor_summary",
 var textarea = $('#case_summary');
 
 function Collaborator( session_id ) {
-    this.collaboration_socket = io.connect() ;
+    this.collaboration_socket = io.connect('', { path: window.IRIS_SOCKET_PATH || '/socket.io' });
 
     this.channel = "case-" + session_id;
     this.collaboration_socket.emit('join', { 'channel': this.channel });
@@ -514,5 +514,4 @@ $(document).ready(function() {
      });
 
 });
-
 

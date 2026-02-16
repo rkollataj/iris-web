@@ -65,6 +65,21 @@ logger.basicConfig(level=logger.INFO, format=LOG_FORMAT, datefmt=LOG_TIME_FORMAT
 app = Flask(__name__)
 
 
+def _normalize_base_path(value):
+    if not value:
+        return ""
+    value = value.strip()
+    if not value:
+        return ""
+    if not value.startswith("/"):
+        value = f"/{value}"
+    if len(value) > 1 and value.endswith("/"):
+        value = value.rstrip("/")
+    if value == "/":
+        return ""
+    return value
+
+
 def ac_current_user_has_permission(*permissions):
     """
     Return True if current user has permission
@@ -96,6 +111,11 @@ app.jinja_env.autoescape = True
 
 app.config.from_object('app.configuration.Config')
 
+iris_base_path = _normalize_base_path(os.environ.get("IRIS_BASE_PATH", ""))
+if iris_base_path:
+    app.config["APPLICATION_ROOT"] = iris_base_path
+    app.config["SESSION_COOKIE_PATH"] = iris_base_path
+
 cache = Cache(app)
 
 SQLALCHEMY_ENGINE_OPTIONS = {
@@ -121,7 +141,7 @@ store = HttpExposedFileSystemStore(
     prefix='/static/assets/images/'
 )
 
-app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_prefix=1)
 app.wsgi_app = store.wsgi_middleware(app.wsgi_app)
 
 socket_io = SocketIO(app, cors_allowed_origins="*")

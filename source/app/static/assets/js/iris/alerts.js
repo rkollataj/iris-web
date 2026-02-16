@@ -2104,7 +2104,7 @@ async function updateBatchAlerts(data_content= {}) {
        window.swal({
           title: "Alerts are being updated, please wait",
           text: "This window will close automatically when it's done",
-          icon: "/static/assets/img/loader.gif",
+              icon: (window.IRIS_BASE_PATH || "") + "/static/assets/img/loader.gif",
           button: false,
           allowOutsideClick: false
         });
@@ -2132,7 +2132,7 @@ async function deleteBatchAlerts(data_content= {}) {
        window.swal({
               title: "Alerts are being deleted, please wait",
               text: "This window will close automatically when it's done",
-              icon: "/static/assets/img/loader.gif",
+              icon: (window.IRIS_BASE_PATH || "") + "/static/assets/img/loader.gif",
               button: false,
               allowOutsideClick: false
         });
@@ -2257,7 +2257,7 @@ $(document).ready(function () {
     getAlertResolutionList();
 
     // Connect to socket.io alerts namespace
-    const socket = io.connect('/alerts');
+    const socket = io.connect('/alerts', { path: window.IRIS_SOCKET_PATH || '/socket.io' });
 
   $('#toggle-selection-mode').on('click', function() {
     // Toggle the 'selection-mode' class on the body element

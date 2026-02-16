@@ -4,9 +4,9 @@
 {% block title %} Dashboard {% endblock title %}
 
 {% block stylesheets %}
-<link rel="stylesheet" href="/static/assets/css/suggestags.css">
-<link href="/static/assets/css/dataTables.contextualActions.min.css" rel="stylesheet">
-<link href="/static/assets/css/dataTables.select.min.css" rel="stylesheet">
+<link rel="stylesheet" href="{{ request.script_root }}/static/assets/css/suggestags.css">
+<link href="{{ request.script_root }}/static/assets/css/dataTables.contextualActions.min.css" rel="stylesheet">
+<link href="{{ request.script_root }}/static/assets/css/dataTables.select.min.css" rel="stylesheet">
 <style>
   #assignedAlertsCard {
     cursor: pointer;
@@ -364,17 +364,17 @@
 {% endblock content %}
 
 {% block javascripts %}
-    <script src="/static/assets/js/plugin/tagsinput/suggesttag.js"></script>
-    <script src="/static/assets/js/plugin/select/select2.js"></script>
+    <script src="{{ request.script_root }}/static/assets/js/plugin/tagsinput/suggesttag.js"></script>
+    <script src="{{ request.script_root }}/static/assets/js/plugin/select/select2.js"></script>
 
-    <script src="/static/assets/js/plugin/datatables/dataTables.cellEdit.js"></script>
-    <script src="/static/assets/js/plugin/datatables/dataTables.buttons.min.js"></script>
-    <script src="/static/assets/js/plugin/datatables/dataTables.contextualActions.min.js"></script>
-    <script src="/static/assets/js/plugin/datatables/dataTables.select.min.js"></script>
-    <script src="/static/assets/js/plugin/datatables/buttons.html5.min.js"></script>
-    <script src="/static/assets/js/plugin/datatables/buttons.print.min.js"></script>
-    <script src="/static/assets/js/iris/dashboard.js"></script>
-    <script src="/static/assets/js/core/charts.js"></script>
+    <script src="{{ request.script_root }}/static/assets/js/plugin/datatables/dataTables.cellEdit.js"></script>
+    <script src="{{ request.script_root }}/static/assets/js/plugin/datatables/dataTables.buttons.min.js"></script>
+    <script src="{{ request.script_root }}/static/assets/js/plugin/datatables/dataTables.contextualActions.min.js"></script>
+    <script src="{{ request.script_root }}/static/assets/js/plugin/datatables/dataTables.select.min.js"></script>
+    <script src="{{ request.script_root }}/static/assets/js/plugin/datatables/buttons.html5.min.js"></script>
+    <script src="{{ request.script_root }}/static/assets/js/plugin/datatables/buttons.print.min.js"></script>
+    <script src="{{ request.script_root }}/static/assets/js/iris/dashboard.js"></script>
+    <script src="{{ request.script_root }}/static/assets/js/core/charts.js"></script>
    <script>
 
 		htmlLegendsChart = document.getElementById('htmlLegendsChart').getContext('2d');

@@ -294,7 +294,7 @@ async function save_ds_multi_files(node, index_i) {
         window.swal({
             title: `File ${file.name} is uploading. (${index}/${totalFiles} files)`,
             text: "Please wait. This window will close automatically when the file is uploaded.",
-            icon: "/static/assets/img/loader.gif",
+              icon: (window.IRIS_BASE_PATH || "") + "/static/assets/img/loader.gif",
             button: false,
             allowOutsideClick: false
         });
@@ -323,7 +323,7 @@ function save_ds_file(node, file_id) {
         window.swal({
               title: "File is uploading",
               text: "Please wait. This window will close automatically when the file is uploaded.",
-              icon: "/static/assets/img/loader.gif",
+              icon: (window.IRIS_BASE_PATH || "") + "/static/assets/img/loader.gif",
               button: false,
               allowOutsideClick: false
         });

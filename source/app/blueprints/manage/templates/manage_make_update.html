@@ -5,14 +5,18 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>IRIS - Server updates</title>
 	<meta content='width=device-width, initial-scale=1.0, shrink-to-fit=no' name='viewport' />
-	<link rel="icon" href="/static/assets/img/logo.ico" type="image/x-icon"/>
+	<link rel="icon" href="{{ request.script_root }}/static/assets/img/logo.ico" type="image/x-icon"/>
 
 	<!-- Fonts and icons -->
-	<script src="/static/assets/js/plugin/webfont/webfont.min.js"></script>
+	<script src="{{ request.script_root }}/static/assets/js/plugin/webfont/webfont.min.js"></script>
+	<script>
+		window.IRIS_BASE_PATH = {{ request.script_root|tojson }};
+		window.IRIS_SOCKET_PATH = (window.IRIS_BASE_PATH || "") + "/socket.io";
+	</script>
 	<script>
 		WebFont.load({
 			custom: {"families":["Lato:300,400,700,900", "Flaticon", "Font Awesome 5 Solid", "Font Awesome 5 Regular", "Font Awesome 5 Brands", "simple-line-icons"],
-			urls: ['/static/assets/css/fonts.css']},
+			urls: ['{{ request.script_root }}/static/assets/css/fonts.css']},
 			active: function() {
 				sessionStorage.fonts = true;
 			}
@@ -20,17 +24,17 @@
 	</script>
 
 	<!-- CSS Files -->
-	<link rel="stylesheet" href="/static/assets/css/bootstrap.min.css">
-	<link rel="stylesheet" href="/static/assets/css/atlantis.css">
-	<link rel="stylesheet" href="/static/assets/css/bootstrap-select.min.css">
+	<link rel="stylesheet" href="{{ request.script_root }}/static/assets/css/bootstrap.min.css">
+	<link rel="stylesheet" href="{{ request.script_root }}/static/assets/css/atlantis.css">
+	<link rel="stylesheet" href="{{ request.script_root }}/static/assets/css/bootstrap-select.min.css">
 
 </head>
 <body class="bg-dark-gradient p-4" style="height: 100vh;">
     <div class="container bg-white shadow-lg p-3 rounded mb-4">
 			<div class="mt-2 row">
 				<div class="col d-flex justify-content-center">
-					<a href="/" class="logo ml-2 text-center">
-						<img src="/static/assets/img/logo-alone-2-black.png" alt="navbar brand" class='image-update navbar-brand' width="50">
+					<a href="{{ request.script_root }}/" class="logo ml-2 text-center">
+						<img src="{{ request.script_root }}/static/assets/img/logo-alone-2-black.png" alt="navbar brand" class='image-update navbar-brand' width="50">
 					</a>
 				</div>
 			</div>
@@ -91,30 +95,30 @@
 			<div class="row mt-4">
 				<div class="col d-flex justify-content-center">
 					<div id="tag_bottom" style="display:none;" class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
-					<a href='/manage/settings' class="btn btn-dark ml-mr-auto" style="display:none;" id="update_return_button">Go back to server</a>
+					<a href='{{ request.script_root }}/manage/settings' class="btn btn-dark ml-mr-auto" style="display:none;" id="update_return_button">Go back to server</a>
 				</div>
 			</div>
 	</div>
 
 	<!--   Core JS Files   -->
 
-	<script src="/static/assets/js/core/jquery.3.2.1.min.js"></script>
-	<script src="/static/assets/js/core/popper.min.js"></script>
-	<script src="/static/assets/js/core/bootstrap.min.js"></script>
+	<script src="{{ request.script_root }}/static/assets/js/core/jquery.3.2.1.min.js"></script>
+	<script src="{{ request.script_root }}/static/assets/js/core/popper.min.js"></script>
+	<script src="{{ request.script_root }}/static/assets/js/core/bootstrap.min.js"></script>
 
 	<!-- jQuery UI -->
-	<script src="/static/assets/js/plugin/jquery-ui-1.12.1.custom/jquery-ui.min.js"></script>
-	<script src="/static/assets/js/plugin/jquery-ui-touch-punch/jquery.ui.touch-punch.min.js"></script>
+	<script src="{{ request.script_root }}/static/assets/js/plugin/jquery-ui-1.12.1.custom/jquery-ui.min.js"></script>
+	<script src="{{ request.script_root }}/static/assets/js/plugin/jquery-ui-touch-punch/jquery.ui.touch-punch.min.js"></script>
 
 	<!-- jQuery Scrollbar -->
-	<script src="/static/assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js"></script>
+	<script src="{{ request.script_root }}/static/assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js"></script>
 
 	<!-- Atlantis JS -->
-	<script src="/static/assets/js/atlantis.min.js"></script>
-	{% if current_user.in_dark_mode %}<script src="/static/assets/js/dark-mode.js"></script>{% endif %}
+	<script src="{{ request.script_root }}/static/assets/js/atlantis.min.js"></script>
+	{% if current_user.in_dark_mode %}<script src="{{ request.script_root }}/static/assets/js/dark-mode.js"></script>{% endif %}
 
-    <script src="/static/assets/js/core/socket.io.js"></script>
-    <script src="/static/assets/js/iris/updates.handler.js"></script>
+    <script src="{{ request.script_root }}/static/assets/js/core/socket.io.js"></script>
+    <script src="{{ request.script_root }}/static/assets/js/iris/updates.handler.js"></script>
 
 </body>
 </html>

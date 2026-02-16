@@ -32,7 +32,7 @@ $(document).ready(function(){
     });
     // Check if io is avalaible
     if (typeof io !== 'undefined' && io !== undefined) {
-        collab_case = io.connect();
+        collab_case = io.connect('', { path: window.IRIS_SOCKET_PATH || '/socket.io' });
         collab_case.emit('join-case-obj-notif', { 'channel': 'case-' + get_caseid() });
     }
 });

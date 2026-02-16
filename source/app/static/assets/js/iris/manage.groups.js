@@ -266,7 +266,7 @@ function manage_group_cac(group_id) {
             window.swal({
                   title: "Updating access",
                   text: "Please wait. We are updating users access.",
-                  icon: "/static/assets/img/loader_cubes.gif",
+              icon: (window.IRIS_BASE_PATH || "") + "/static/assets/img/loader_cubes.gif",
                   button: false,
                   allowOutsideClick: false
             });
@@ -318,7 +318,7 @@ function remove_cases_access_group(group_id, cases, on_finish) {
             window.swal({
               title: "Updating access",
               text: "Please wait. We are updating users access.",
-              icon: "/static/assets/img/loader_cubes.gif",
+              icon: (window.IRIS_BASE_PATH || "") + "/static/assets/img/loader_cubes.gif",
               button: false,
               allowOutsideClick: false
             });

@@ -49,7 +49,7 @@ function initiate_update() {
 }
 
 var intervalId = null;
-var ios = io('/server-updates');
+var ios = io('/server-updates', { path: window.IRIS_SOCKET_PATH || '/socket.io' });
 var update_socket = null;
 var current_version = null;
 var updated_version = null;

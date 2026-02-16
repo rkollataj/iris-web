@@ -4,7 +4,7 @@
 
 {% block stylesheets %}
 {% include 'includes/header_case.html' %}
-<link rel="stylesheet" href="/static/assets/css/bootstrap-multiselect.min.css">
+<link rel="stylesheet" href="{{ request.script_root }}/static/assets/css/bootstrap-multiselect.min.css">
 {% endblock stylesheets %}
 
 {% block content %}
@@ -101,9 +101,9 @@
 {% block javascripts %}
 {% include 'includes/footer_case.html' %}
 
-<script src="/static/assets/js/plugin/datatables/dataTables.cellEdit.js"></script>
-<script src="/static/assets/js/plugin/select/bootstrap-multiselect.min.js"></script>
-<script src="/static/assets/js/iris/case.tasks.js"></script>
+<script src="{{ request.script_root }}/static/assets/js/plugin/datatables/dataTables.cellEdit.js"></script>
+<script src="{{ request.script_root }}/static/assets/js/plugin/select/bootstrap-multiselect.min.js"></script>
+<script src="{{ request.script_root }}/static/assets/js/iris/case.tasks.js"></script>
 
 
 {% endblock javascripts %}

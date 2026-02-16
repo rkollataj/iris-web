@@ -53,7 +53,7 @@ function add_case_template() {
                 window.swal({
                       title: "Adding...",
                       text: "Please wait",
-                      icon: "/static/assets/img/loader.gif",
+              icon: (window.IRIS_BASE_PATH || "") + "/static/assets/img/loader.gif",
                       button: false,
                       allowOutsideClick: false
                 });
@@ -234,7 +234,7 @@ function update_case_template(ctempl_id, editor, partial, complete){
         window.swal({
               title: "Updating...",
               text: "Please wait",
-              icon: "/static/assets/img/loader.gif",
+              icon: (window.IRIS_BASE_PATH || "") + "/static/assets/img/loader.gif",
               button: false,
               allowOutsideClick: false
         });
@@ -288,7 +288,7 @@ function upload_case_template() {
                 window.swal({
                       title: "Adding...",
                       text: "Please wait",
-                      icon: "/static/assets/img/loader.gif",
+              icon: (window.IRIS_BASE_PATH || "") + "/static/assets/img/loader.gif",
                       button: false,
                       allowOutsideClick: false
                 });

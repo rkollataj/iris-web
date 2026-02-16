@@ -2,8 +2,8 @@
 {% block title %}Custom Dashboards{% endblock title %}
 
 {% block stylesheets %}
-  <link rel="stylesheet" href="/static/assets/css/select2.css">
-  <link rel="stylesheet" href="/static/assets/css/custom_dashboards.css">
+  <link rel="stylesheet" href="{{ request.script_root }}/static/assets/css/select2.css">
+  <link rel="stylesheet" href="{{ request.script_root }}/static/assets/css/custom_dashboards.css">
 {% endblock stylesheets %}
 
 {% block content %}
@@ -427,8 +427,8 @@
 {% endblock content %}
 
 {% block javascripts %}
-  <script src="/static/assets/js/plugin/ace/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
-  <script src="/static/assets/js/plugin/ace/src-noconflict/ext-language_tools.js" type="text/javascript" charset="utf-8"></script>
-  <script src="/static/assets/js/core/charts.js"></script>
-  <script src="/static/assets/js/iris/custom_dashboards/custom_dashboards.js"></script>
+  <script src="{{ request.script_root }}/static/assets/js/plugin/ace/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
+  <script src="{{ request.script_root }}/static/assets/js/plugin/ace/src-noconflict/ext-language_tools.js" type="text/javascript" charset="utf-8"></script>
+  <script src="{{ request.script_root }}/static/assets/js/core/charts.js"></script>
+  <script src="{{ request.script_root }}/static/assets/js/iris/custom_dashboards/custom_dashboards.js"></script>
 {% endblock javascripts %}

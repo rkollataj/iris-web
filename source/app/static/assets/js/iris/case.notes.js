@@ -1153,7 +1153,7 @@ $(document).ready(function(){
 
 
     cid = get_caseid();
-    collaborator_socket = io.connect();
+    collaborator_socket = io.connect('', { path: window.IRIS_SOCKET_PATH || '/socket.io' });
     collaborator_socket.emit('join-notes-overview', { 'channel': 'case-' + cid + '-notes' });
 
     collaborator_socket.on('ping-note', function(data) {

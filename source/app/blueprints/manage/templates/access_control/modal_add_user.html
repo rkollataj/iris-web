@@ -321,7 +321,7 @@
                     "data": "case_name",
                     "className": "dt-center",
                     "render": function (data, type, row) {
-                        return `<a target="_blank" rel="noopener" href="/case?cid=${row.case_id}">${sanitizeHTML(data)}</a>`;
+                        return `<a target="_blank" rel="noopener" href="{{ request.script_root }}/case?cid=${row.case_id}">${sanitizeHTML(data)}</a>`;
                     }
                 },
                 {

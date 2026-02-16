@@ -156,7 +156,7 @@ function update_attribute(attr_id, editor, partial, complete){
         window.swal({
               title: "Updating and migrating...",
               text: "Please wait",
-              icon: "/static/assets/img/loader.gif",
+              icon: (window.IRIS_BASE_PATH || "") + "/static/assets/img/loader.gif",
               button: false,
               allowOutsideClick: false
         });

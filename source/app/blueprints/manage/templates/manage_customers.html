@@ -4,7 +4,7 @@
 
 {% block stylesheets %}
 
-    <link rel="stylesheet" href="/static/assets/css/suggestags.css">
+    <link rel="stylesheet" href="{{ request.script_root }}/static/assets/css/suggestags.css">
 
 {% endblock stylesheets %}
 
@@ -69,6 +69,6 @@
 
 {% block javascripts %}
 
-    <script src="/static/assets/js/iris/manage.customers.js"></script>
+    <script src="{{ request.script_root }}/static/assets/js/iris/manage.customers.js"></script>
 
 {% endblock javascripts %}

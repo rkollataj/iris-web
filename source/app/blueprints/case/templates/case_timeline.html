@@ -3,10 +3,10 @@
 {% block title %} Case Timeline {% endblock title %}
 
 {% block stylesheets %}
-<link rel="stylesheet" href="/static/assets/css/bootstrap-datetime.css">
-<link rel="stylesheet" href="/static/assets/css/suggestags.css">
-<link rel="stylesheet" href="/static/assets/css/bootstrap-select.min.css">
-<link rel="stylesheet" href="/static/assets/css/select2.css">
+<link rel="stylesheet" href="{{ request.script_root }}/static/assets/css/bootstrap-datetime.css">
+<link rel="stylesheet" href="{{ request.script_root }}/static/assets/css/suggestags.css">
+<link rel="stylesheet" href="{{ request.script_root }}/static/assets/css/bootstrap-select.min.css">
+<link rel="stylesheet" href="{{ request.script_root }}/static/assets/css/select2.css">
 
 {% endblock stylesheets %}
 
@@ -179,8 +179,8 @@ event_date,event_tz,event_title,event_category,event_content,event_raw,event_sou
 {% block javascripts %}
 
 {% include 'includes/footer_case.html' %}
-<script src="/static/assets/js/iris/case.timeline.js"></script>
-<script src="/static/assets/js/core/socket.io.js"></script>
-<script src="/static/assets/js/timeline.js"></script>
+<script src="{{ request.script_root }}/static/assets/js/iris/case.timeline.js"></script>
+<script src="{{ request.script_root }}/static/assets/js/core/socket.io.js"></script>
+<script src="{{ request.script_root }}/static/assets/js/timeline.js"></script>
 
 {% endblock javascripts %}

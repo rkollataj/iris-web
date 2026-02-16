@@ -3,9 +3,9 @@
 
 {% block stylesheets %}
 
-    <link rel="stylesheet" href="/static/assets/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/static/assets/css/atlantis.css">
-    <link rel="stylesheet" href="/static/assets/css/login/login.css">
+    <link rel="stylesheet" href="{{ request.script_root }}/static/assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ request.script_root }}/static/assets/css/atlantis.css">
+    <link rel="stylesheet" href="{{ request.script_root }}/static/assets/css/login/login.css">
 
 {% endblock stylesheets %}
 
@@ -14,7 +14,7 @@
     <div class="login__wrapper row">
         <div class="login__left_part col-xs-12 col-md-8">
             <div class="login__logo">
-                <img src="/static/assets/img/logo-white.png">
+                <img src="{{ request.script_root }}/static/assets/img/logo-white.png">
             </div>
             <h3 class="text-white">{{ organisation_name }}</h3>
             <span class="text-white text-center mt-4">{{ login_banner|replace('\n', '<br>')|safe }}</span>
@@ -44,7 +44,7 @@
                     <div class="login__form_field_container">
                         <button type="submit" class="btn btn-primary login__submit_button">Sign In</button>
                         {% if auth_type == 'oidc' %}
-                        <a href="/oidc-login" class="btn float-right btn-light login__submit_button">Use SSO</a>
+                        <a href="{{ request.script_root }}/oidc-login" class="btn float-right btn-light login__submit_button">Use SSO</a>
                         {% endif %}
                     </div>
                 </div>

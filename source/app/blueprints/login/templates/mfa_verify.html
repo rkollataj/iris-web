@@ -4,9 +4,9 @@
 
 {% block stylesheets %}
 
-    <link rel="stylesheet" href="/static/assets/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/static/assets/css/atlantis.css">
-    <link rel="stylesheet" href="/static/assets/css/login/login.css">
+    <link rel="stylesheet" href="{{ request.script_root }}/static/assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ request.script_root }}/static/assets/css/atlantis.css">
+    <link rel="stylesheet" href="{{ request.script_root }}/static/assets/css/login/login.css">
 
 {% endblock stylesheets %}
 
@@ -16,7 +16,7 @@
             <div class="radial-bg-primary col-xs-12 col-md-8">
                 <div class="d-flex flex-column justify-content-center align-items-center" style="height: 100%;">
                     <div class="login__logo">
-                        <img src="/static/assets/img/logo-white.png" class="flicker">
+                        <img src="{{ request.script_root }}/static/assets/img/logo-white.png" class="flicker">
                     </div>
                 </div>
                 <span class="text-white text-center mt-4">{{ login_banner|replace('\n', '<br>')|safe }}</span>

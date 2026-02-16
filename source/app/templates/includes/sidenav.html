@@ -6,7 +6,7 @@
 					{% if current_user.is_authenticated %}
 					<div class="user">
 						<div class="avatar-sm float-left mr-2">
-							<img src="/static/assets/img/profile.jpg" alt="..." class="avatar-img rounded-circle">
+							<img src="{{ request.script_root }}/static/assets/img/profile.jpg" alt="..." class="avatar-img rounded-circle">
 						</div>
 						<div class="info">
 							<a data-toggle="collapse" href="#collapseExample" aria-expanded="true">
@@ -24,7 +24,7 @@
 							<div class="collapse in" id="collapseExample">
 								<ul class="nav">
 									<li>
-										<a href="/user/settings?cid={{session['current_case'].case_id}}">
+										<a href="{{ request.script_root }}/user/settings?cid={{session['current_case'].case_id}}">
 											<span class="link-collapse">My settings</span>
 										</a>
 									</li>
@@ -40,32 +40,32 @@
 					<ul class="nav nav-primary" id="l_nav_tab">
 
 						<li class="nav-item">
-							<a href="/dashboard?cid={{session['current_case'].case_id}}">
+							<a href="{{ request.script_root }}/dashboard?cid={{session['current_case'].case_id}}">
 								<i class="flaticon-home"></i>
 								<span>Home</span>
 							</a>
 						</li>
 						<li class="nav-item">
-							<a href="/statistics?cid={{session['current_case'].case_id}}">
+							<a href="{{ request.script_root }}/statistics?cid={{session['current_case'].case_id}}">
 								<i class="fa-solid fa-chart-pie"></i>
 								<span>Statistics</span>
 							</a>
 						</li>
 						<li class="nav-item">
-							<a href="/custom-dashboards?cid={{session['current_case'].case_id}}">
+							<a href="{{ request.script_root }}/custom-dashboards?cid={{session['current_case'].case_id}}">
 								<i class="fa-solid fa-chart-line"></i>
 								<span>Dashboards</span>
 							</a>
 						</li>
 						<li class="nav-item">
-							<a href="/overview?cid={{session['current_case'].case_id}}">
+							<a href="{{ request.script_root }}/overview?cid={{session['current_case'].case_id}}">
 								<i class="fa-solid fa-street-view"></i>
 								<span>Overview</span>
 							</a>
 						</li>
 						{% if demo_domain %}
 						<li class="nav-item">
-							<a href="/welcome">
+							<a href="{{ request.script_root }}/welcome">
 								<i class="fa-solid fa-door-open"></i>
 								<span>Welcome page</span>
 							</a>
@@ -78,14 +78,14 @@
 							<h4 class="text-section">Investigation</h4>
 						</li>
 						<li class="nav-item">
-							<a href="/case?cid={{session['current_case'].case_id}}">
+							<a href="{{ request.script_root }}/case?cid={{session['current_case'].case_id}}">
 								<i class="flaticon-network"></i>
 								<span>Case</span>
 							</a>
 						</li>
 						{% if user_has_perm(std_permissions.alerts_read) %}
 						<li class="nav-item">
-							<a href="/alerts?cid={{session['current_case'].case_id}}">
+							<a href="{{ request.script_root }}/alerts?cid={{session['current_case'].case_id}}">
 								<i class="flaticon-alarm-1"></i>
 								<span>Alerts</span>
 							</a>
@@ -93,7 +93,7 @@
 						{% endif %}
 						{% if user_has_perm(std_permissions.search_across_cases) %}
 						<li class="nav-item">
-							<a href="/search?cid={{session['current_case'].case_id}}">
+							<a href="{{ request.script_root }}/search?cid={{session['current_case'].case_id}}">
 								<i class="flaticon-search-2"></i>
 								<span>Search</span>
 							</a>
@@ -101,14 +101,14 @@
 						{% endif %}
 						{% if user_has_perm(std_permissions.activities_read) or user_has_perm(std_permissions.all_activities_read) %}
 						<li class="nav-item">
-							<a href="/activities?cid={{session['current_case'].case_id}}">
+							<a href="{{ request.script_root }}/activities?cid={{session['current_case'].case_id}}">
 								<i class="flaticon-list"></i>
 								<span>Activities</span>
 							</a>
 						</li>
 						{% endif %}
 						<li class="nav-item">
-							<a href="/dim/tasks?cid={{session['current_case'].case_id}}">
+							<a href="{{ request.script_root }}/dim/tasks?cid={{session['current_case'].case_id}}">
 								<i class="flaticon-web-1"></i>
 								<span>DIM Tasks</span>
 							</a>
@@ -122,7 +122,7 @@
 							<h4 class="text-section">Manage</h4>
 						</li>
 						<li class="nav-item">
-							<a href="/manage/cases?cid={{session['current_case'].case_id}}">
+							<a href="{{ request.script_root }}/manage/cases?cid={{session['current_case'].case_id}}">
 								<i class="flaticon-folder"></i>
 								<span>Manage cases</span>
 							</a>
@@ -139,7 +139,7 @@
 								<ul class="nav nav-collapse">
 									{% if user_has_perm(std_permissions.server_administrator) %}
 									<li class="nav-subitem">
-										<a href="/manage/modules?cid={{session['current_case'].case_id}}">
+										<a href="{{ request.script_root }}/manage/modules?cid={{session['current_case'].case_id}}">
 											<i class="flaticon-technology-1"></i>
 											<span class="subsub-item">Modules</span>
 										</a>
@@ -147,7 +147,7 @@
 									{% endif %}
 									{% if user_has_perm(std_permissions.customers_read) %}
 									<li class="nav-subitem">
-										<a href="/manage/customers?cid={{session['current_case'].case_id}}">
+										<a href="{{ request.script_root }}/manage/customers?cid={{session['current_case'].case_id}}">
 											<i class="flaticon-profile"></i>
 											<span class="subsub-item">Customers</span>
 										</a>
@@ -155,14 +155,14 @@
 									{% endif %}
 									{% if user_has_perm(std_permissions.server_administrator) %}
 									<li class="nav-subitem">
-										<a href="/manage/objects?cid={{session['current_case'].case_id}}">
+										<a href="{{ request.script_root }}/manage/objects?cid={{session['current_case'].case_id}}">
 											<i class="flaticon-box-2"></i>
 											<span>Case Objects</span>
 										</a>
 									</li>
 
 									<li class="nav-subitem">
-										<a href="/manage/attributes?cid={{session['current_case'].case_id}}">
+										<a href="{{ request.script_root }}/manage/attributes?cid={{session['current_case'].case_id}}">
 											<i class="flaticon-layers-1"></i>
 											<span>Custom Attributes</span>
 										</a>
@@ -170,7 +170,7 @@
 									{% endif %}
 									{% if user_has_perm(std_permissions.case_templates_read) %}
 									<li class="nav-subitem">
-										<a href="/manage/case-templates?cid={{session['current_case'].case_id}}">
+										<a href="{{ request.script_root }}/manage/case-templates?cid={{session['current_case'].case_id}}">
 											<i class="flaticon-interface-7"></i>
 											<span>Case Templates</span>
 										</a>
@@ -178,21 +178,21 @@
 									{% endif %}
 									{% if user_has_perm(std_permissions.server_administrator) %}
 									<li class="nav-subitem">
-										<a href="/manage/templates?cid={{session['current_case'].case_id}}">
+										<a href="{{ request.script_root }}/manage/templates?cid={{session['current_case'].case_id}}">
 											<i class="flaticon-interface-6"></i>
 											<span>Report Templates</span>
 										</a>
 									</li>
 
 									<li class="nav-subitem">
-										<a href="/manage/access-control?cid={{session['current_case'].case_id}}">
+										<a href="{{ request.script_root }}/manage/access-control?cid={{session['current_case'].case_id}}">
 											<i class="flaticon-lock-1"></i>
 											<span>Access control</span>
 										</a>
 									</li>
 
 									<li class="nav-subitem">
-										<a href="/manage/settings?cid={{session['current_case'].case_id}}">
+										<a href="{{ request.script_root }}/manage/settings?cid={{session['current_case'].case_id}}">
 											<i class="flaticon-settings"></i>
 											<span>Server settings</span>
 										</a>
@@ -216,7 +216,7 @@
 					</div>
 					<div class="row ml-2 mr-2">
 						<span class="text-dark text-center ml-auto mr-auto"><a href="https://github.com/dfir-iris/iris-web" target="_blank" rel="noopener">IRIS {{ iris_version }}</a> {% if has_updates %}
-								<a href="/manage/settings?cid={{session['current_case'].case_id}}"> <i class="ml-1 text-warning fas fa-exclamation-circle" title="Updates are available for the server"></i></a>{% endif %}
+								<a href="{{ request.script_root }}/manage/settings?cid={{session['current_case'].case_id}}"> <i class="ml-1 text-warning fas fa-exclamation-circle" title="Updates are available for the server"></i></a>{% endif %}
 						</span>
 					</div>
 				</div>
