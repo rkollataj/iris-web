@@ -21,7 +21,7 @@ import io
 
 import pyotp
 import qrcode
-from urllib.parse import urlsplit
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 import random
 import string
 
@@ -290,7 +290,23 @@ def wrap_login_user(user, is_oidc=False):
 
     next_url = None
     if request.args.get('next'):
-        next_url = request.args.get('next') if 'cid=' in request.args.get('next') else request.args.get('next') + '?cid=' + str(user.ctx_case)
+        next_url = request.args.get('next')
+        parsed_next_url = urlsplit(next_url)
+        query = dict(parse_qsl(parsed_next_url.query, keep_blank_values=True))
+        query.setdefault('cid', str(user.ctx_case))
+        next_url = urlunsplit((
+            parsed_next_url.scheme,
+            parsed_next_url.netloc,
+            parsed_next_url.path,
+            urlencode(query, doseq=True),
+            parsed_next_url.fragment
+        ))
+
+        # When deployed behind a path prefix, `next` may be app-relative.
+        # Prefix it with script_root so redirects stay under the mounted path.
+        if request.script_root and next_url.startswith('/'):
+            if not next_url.startswith(f"{request.script_root}/") and next_url != request.script_root:
+                next_url = f"{request.script_root}{next_url}"
 
     if not next_url or urlsplit(next_url).netloc != '':
         next_url = url_for('index.index', cid=user.ctx_case)
