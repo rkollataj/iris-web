@@ -457,6 +457,7 @@ class Config:
         OIDC_ISSUER_URL = config.load('OIDC', 'ISSUER_URL')
         OIDC_CLIENT_ID = config.load('OIDC', 'CLIENT_ID')
         OIDC_CLIENT_SECRET = config.load('OIDC', 'CLIENT_SECRET')
+        OIDC_SKIP_SSL_VERIFY = config.load('OIDC', 'SKIP_SSL_VERIFY', fallback='False') == 'True'
         OIDC_AUTH_ENDPOINT = config.load('OIDC', 'AUTH_ENDPOINT', fallback=None)
         OIDC_TOKEN_ENDPOINT = config.load('OIDC', 'TOKEN_ENDPOINT', fallback=None)
         OIDC_END_SESSION_ENDPOINT = config.load('OIDC', 'END_SESSION_ENDPOINT', fallback=None)
