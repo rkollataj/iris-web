@@ -63,7 +63,13 @@ docker compose pull
 docker compose up
 ```
 
-Iris shall be available on the host interface, port 443, protocol HTTPS - ``https://<your_instance_ip>/iris``.  
+Iris protocol exposure is controlled by listening port variables:
+- ``INTERFACE_HTTP_PORT`` enables HTTP (example: ``http://<your_instance_ip>/``)
+- ``INTERFACE_HTTPS_PORT`` enables HTTPS (example: ``https://<your_instance_ip>/``)
+
+If one of these variables is unset or empty, the corresponding protocol is disabled in Nginx.  
+If both are unset, Nginx will not start.  
+If ``IRIS_BASE_PATH`` is set, prepend it to the URL (for example ``/iris`` -> ``https://<your_instance_ip>/iris``).  
 By default, an ``administrator`` account is created. The password is printed in stdout the very first time Iris is started. It won't be printed anymore after that.  
 ``WARNING :: post_init :: create_safe_admin :: >>>`` can be searched in the logs of the `webapp` docker to find the password.  
 The initial password can be set via the [configuration](https://docs.dfir-iris.org/operations/configuration/).   
@@ -113,4 +119,3 @@ The contents of this repository is available under [LGPL3 license](LICENSE.txt).
 
 ## Sponsoring
 Special thanks to Deutsche Telekom Security GmbH for sponsoring us!
-
