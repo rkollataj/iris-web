@@ -53,18 +53,9 @@ class IrisConfig(configparser.ConfigParser):
             log.getLogger('azure.core.pipeline.policies.http_logging_policy').setLevel(log.WARNING)
 
     def validate_config(self):
-        required_values = {
-            'POSTGRES': {
-            },
-            'IRIS': {
-            },
-            'CELERY': {
-            },
-            'DEVELOPMENT': {
-            }
-        }
+        required_values = ['POSTGRES', 'IRIS', 'CELERY', 'DEVELOPMENT']
 
-        for section, keys in required_values.items():
+        for section, in required_values.items():
             if section not in self:
                 raise IrisConfigException(
                     'Missing section %s in the configuration file' % section)
@@ -472,6 +463,8 @@ class Config:
         OIDC_SCOPES = config.load('OIDC', 'SCOPES', fallback="openid email profile")
         OIDC_MAPPING_USERNAME = config.load('OIDC', 'MAPPING_USERNAME', fallback='preferred_username')
         OIDC_MAPPING_EMAIL = config.load('OIDC', 'MAPPING_EMAIL', fallback='email')
+        OIDC_MAPPING_USERGROUP = config.load('OIDC', 'MAPPING_USERGROUP', fallback=None)
+        OIDC_MAPPING_ROLES = config.load('OIDC', 'MAPPING_ROLES', fallback=None)
 
     """ Caching 
     """
