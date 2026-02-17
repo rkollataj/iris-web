@@ -39,6 +39,55 @@ function iris_with_base_path(uri) {
     return uri;
 }
 
+function iris_strip_base_path(pathname) {
+    const basePath = window.IRIS_BASE_PATH || "";
+    if (!pathname || typeof pathname !== 'string') {
+        return pathname || "";
+    }
+
+    if (!basePath) {
+        return pathname;
+    }
+
+    if (pathname === basePath) {
+        return '/';
+    }
+
+    if (pathname.startsWith(basePath + '/')) {
+        return pathname.slice(basePath.length);
+    }
+
+    return pathname;
+}
+
+function iris_extract_nav_key(pathname) {
+    const normalized = iris_strip_base_path(pathname || '');
+    const segments = normalized.split('/').filter(Boolean);
+
+    if (!segments.length) {
+        return '';
+    }
+
+    if (segments[0] === 'manage') {
+        return segments.slice(0, 2).join('/');
+    }
+
+    return segments[0];
+}
+
+function iris_get_path_from_href(href) {
+    if (!href || href === '#advanced-nav') {
+        return '';
+    }
+
+    try {
+        const parsed = new URL(href, window.location.origin);
+        return iris_strip_base_path(parsed.pathname);
+    } catch {
+        return iris_strip_base_path(href.split('?')[0]);
+    }
+}
+
 $.ajaxPrefilter(function(options) {
     options.url = iris_with_base_path(options.url);
 });
@@ -1756,25 +1805,15 @@ $(document).ready(function(){
     setInterval(function() { update_time(); }, 30000);
 
     $(function () {
-        var current = location.pathname;
-        btt = current.split('/')[1];
-
-        if (btt !== 'manage') {
-            btt = btt.split('?')[0];
-        } else {
-            csp = current.split('?')[0].split('/')
-            if (csp.length >= 3) {
-                csp = csp.splice(0, 3);
-            }
-            btt = csp.join('/');
-        }
+        var current = iris_strip_base_path(location.pathname);
+        var btt = iris_extract_nav_key(current);
 
         $('#l_nav_tab .nav-item').each(function (k, al) {
-            href = $(al).children().attr('href');
+            var href = $(al).children().attr('href');
             try {
                 if (href == "#advanced-nav") {
                     $('#advanced-nav .nav-subitem').each(function (i, el) {
-                        ktt = $(el).children().attr('href').split('?')[0];
+                        var ktt = iris_extract_nav_key(iris_get_path_from_href($(el).children().attr('href')));
                         if (ktt === btt) {
                             $(el).addClass('active');
                             $(al).addClass('active');
@@ -1783,18 +1822,11 @@ $(document).ready(function(){
                             return false;
                         }
                     });
-                } else if (href.startsWith(btt)){
-                    $(this).addClass('active');
+                } else if (iris_extract_nav_key(iris_get_path_from_href(href)) === btt) {
+                    $(al).addClass('active');
                     return false;
-                }else{
-                    att = "";
-                    att = href.split('/')[1].split('?')[0];
                 }
-            } catch {att=""}
-            if (att === btt) {
-                $(al).addClass('active');
-                return false;
-            }
+            } catch {}
         })
     })
 
