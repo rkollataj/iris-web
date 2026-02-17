@@ -141,7 +141,7 @@ store = HttpExposedFileSystemStore(
     prefix='/static/assets/images/'
 )
 
-app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_prefix=1)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 app.wsgi_app = store.wsgi_middleware(app.wsgi_app)
 
 socket_io = SocketIO(app, cors_allowed_origins="*")
