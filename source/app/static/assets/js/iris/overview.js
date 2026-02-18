@@ -1,6 +1,15 @@
 $.each($.find("table"), function(index, element){
     addFilterFields($(element).attr("id"));
 });
+
+function overview_with_base_path(path) {
+    const basePath = window.IRIS_BASE_PATH || '';
+    if (basePath) {
+        return `${basePath}${path}`;
+    }
+    return path.replace(/^\//, '');
+}
+
 let OverviewTable = $("#overview_table").DataTable({
     dom: '<"container-fluid"<"row"<"col"l><"col"f>>>rt<"container-fluid"<"row"<"col"i><"col"p>>>',
     aaData: [],
@@ -66,7 +75,7 @@ let OverviewTable = $("#overview_table").DataTable({
             if (type === 'display') {
                 let div_anchor = $('<div>');
                 let a_anchor = $('<a>');
-                a_anchor.attr('href', `${window.IRIS_BASE_PATH || ''}/case?cid=${row['case_id']}`);
+                a_anchor.attr('href', overview_with_base_path(`/case?cid=${row['case_id']}`));
                 a_anchor.attr('target', '_blank');
                 a_anchor.attr('rel', 'noopener');
                 a_anchor.html("<i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-2 text-muted'></i>");
@@ -93,7 +102,7 @@ let OverviewTable = $("#overview_table").DataTable({
           if (type === 'display') {
             let div_anchor = $('<div>');
             let a_anchor = $('<a>');
-            a_anchor.attr('href', `${window.IRIS_BASE_PATH || ''}/manage/customers/${data.customer_id}/view`);
+            a_anchor.attr('href', overview_with_base_path(`/manage/customers/${data.customer_id}/view`));
             a_anchor.attr('target', '_blank');
             a_anchor.attr('rel', 'noopener');
             a_anchor.html("<i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-2 text-muted'></i>");
@@ -389,10 +398,10 @@ function show_case_view(row_index) {
     owner_dl2.append($('<dt class="col-sm-3"/>').text('SOC ID:'));
     owner_dl2.append($('<dd class="col-sm-8"/>').text(case_data.soc_id !== '' ? case_data.soc_id : 'None'));
     owner_dl2.append($('<dt class="col-sm-3"/>').text('Related alerts:'));
-    owner_dl2.append($('<dd class="col-sm-8"/>').html(`<a target="_blank" rel="noopener" href='${window.IRIS_BASE_PATH || ''}/alerts?case_id=${case_data.case_id}'>${case_data.alerts.length} related alert(s) <i class="fa-solid fa-up-right-from-square ml-2"></i></a>`));
+    owner_dl2.append($('<dd class="col-sm-8"/>').html(`<a target="_blank" rel="noopener" href='${overview_with_base_path(`/alerts?case_id=${case_data.case_id}`)}'>${case_data.alerts.length} related alert(s) <i class="fa-solid fa-up-right-from-square ml-2"></i></a>`));
     owner_dl2.append($('<dt class="col-sm-3"/>').text('Tasks:'));
     if (case_data.tasks_status != null) {
-        owner_dl2.append($('<dd class="col-sm-8"/>').html(`<a target="_blank" rel="noopener" href='${window.IRIS_BASE_PATH || ''}/case/tasks?cid=${case_data.case_id}'>${case_data.tasks_status.closed_tasks}/${case_data.tasks_status.open_tasks + case_data.tasks_status.closed_tasks} task(s) <i class="fa-solid fa-up-right-from-square ml-2"></i></a>`));
+        owner_dl2.append($('<dd class="col-sm-8"/>').html(`<a target="_blank" rel="noopener" href='${overview_with_base_path(`/case/tasks?cid=${case_data.case_id}`)}'>${case_data.tasks_status.closed_tasks}/${case_data.tasks_status.open_tasks + case_data.tasks_status.closed_tasks} task(s) <i class="fa-solid fa-up-right-from-square ml-2"></i></a>`));
     } else {
         owner_dl2.append($('<dd class="col-sm-8"/>').text('No tasks'));
     }
@@ -413,7 +422,7 @@ function show_case_view(row_index) {
     owner_row.append(owner_col1);
     owner_row.append(owner_col2);
     owner_body.append(owner_row);
-    owner_body.append(`<a type="button" class="btn btn-sm btn-dark float-right" target="_blank" rel="noopener" href='${window.IRIS_BASE_PATH || ''}/case?cid=${case_data.case_id}'><i class="fa-solid fa-up-right-from-square mr-2"></i> View case</a>`);
+    owner_body.append(`<a type="button" class="btn btn-sm btn-dark float-right" target="_blank" rel="noopener" href='${overview_with_base_path(`/case?cid=${case_data.case_id}`)}'><i class="fa-solid fa-up-right-from-square mr-2"></i> View case</a>`);
 
     owner_card.append(owner_body);
     body.append(owner_card);
