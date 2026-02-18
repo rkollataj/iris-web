@@ -142,7 +142,7 @@ function get_case_assets() {
                     action: function(rows) {
                         let row = rows[0];
                         let asset = get_row_value(row);
-                        window.open(`/alerts?alert_assets=${asset}`, '_blank');
+                        window.open(`${IRIS_BASE_PATH}/alerts?alert_assets=${asset}`, '_blank');
                     }
                 }]);
                 $('[data-toggle="popover"]').popover();

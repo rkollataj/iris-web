@@ -1,5 +1,6 @@
 let sortOrder ;
 let editor = null;
+const IRIS_BASE_PATH = window.IRIS_BASE_PATH || "";
 
 function objectToQueryString(obj) {
   return Object.keys(obj)
@@ -628,13 +629,13 @@ function viewAlertGraph() {
     const node_type = $("#view-alert").data('node-type');
 
     if (node_type === 'alert') {
-        window.open(`/alerts?alert_ids=${node_id}&cid=${get_caseid()}`);
+        window.open(`${IRIS_BASE_PATH}/alerts?alert_ids=${node_id}&cid=${get_caseid()}`);
     } else if (node_type === 'case') {
-        window.open(`/case?cid=${node_id}`);
+        window.open(`${IRIS_BASE_PATH}/case?cid=${node_id}`);
     } else if (node_type === 'asset') {
-        window.open(`/alerts?alert_assets=${node_id}&cid=${get_caseid()}`);
+        window.open(`${IRIS_BASE_PATH}/alerts?alert_assets=${node_id}&cid=${get_caseid()}`);
     } else if (node_type === 'ioc') {
-        window.open(`/alerts?alert_iocs=${node_id}&cid=${get_caseid()}`);
+        window.open(`${IRIS_BASE_PATH}/alerts?alert_iocs=${node_id}&cid=${get_caseid()}`);
     }
 }
 

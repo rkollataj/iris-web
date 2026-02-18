@@ -66,7 +66,7 @@ let OverviewTable = $("#overview_table").DataTable({
             if (type === 'display') {
                 let div_anchor = $('<div>');
                 let a_anchor = $('<a>');
-                a_anchor.attr('href', `/case?cid=${row['case_id']}`);
+                a_anchor.attr('href', `${window.IRIS_BASE_PATH || ''}/case?cid=${row['case_id']}`);
                 a_anchor.attr('target', '_blank');
                 a_anchor.attr('rel', 'noopener');
                 a_anchor.html("<i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-2 text-muted'></i>");
@@ -93,7 +93,7 @@ let OverviewTable = $("#overview_table").DataTable({
           if (type === 'display') {
             let div_anchor = $('<div>');
             let a_anchor = $('<a>');
-            a_anchor.attr('href', `/manage/customers/${data.customer_id}/view`);
+            a_anchor.attr('href', `${window.IRIS_BASE_PATH || ''}/manage/customers/${data.customer_id}/view`);
             a_anchor.attr('target', '_blank');
             a_anchor.attr('rel', 'noopener');
             a_anchor.html("<i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-2 text-muted'></i>");

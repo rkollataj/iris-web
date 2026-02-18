@@ -3623,14 +3623,14 @@
 
   if (normalizedKey === 'alerts_alert_id' || normalizedKey === 'alert_id' || sanitizedKey.endsWith('alertid')) {
         return {
-          url: `/alerts?alert_ids=${encodeURIComponent(numericId)}`,
+          url: `${window.IRIS_BASE_PATH || ''}/alerts?alert_ids=${encodeURIComponent(numericId)}`,
           title: `Open alert ${numericId}`
         };
       }
 
   if (normalizedKey === 'cases_case_id' || normalizedKey === 'case_id' || sanitizedKey.endsWith('caseid')) {
         return {
-          url: `/case?cid=${encodeURIComponent(numericId)}`,
+          url: `${window.IRIS_BASE_PATH || ''}/case?cid=${encodeURIComponent(numericId)}`,
           title: `Open case ${numericId}`
         };
       }

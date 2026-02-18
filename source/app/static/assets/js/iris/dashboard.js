@@ -1,6 +1,7 @@
 let UserReviewsTable;
 let UserCasesTable;
 let UserTaskTable;
+const IRIS_BASE_PATH = window.IRIS_BASE_PATH || "";
 const KPI_DEFAULT_RANGE_DAYS = 30;
 const KPI_CASE_STATUS_OPTIONS = [
   { id: '', label: 'All statuses' },
@@ -735,7 +736,7 @@ $(document).ready(function() {
                 "render": function (data, type, row, meta) {
                   if (type === 'display') {
                       let a_anchor = $('<a>');
-                        a_anchor.attr('href', '/case?cid='+ row['case_id']);
+                        a_anchor.attr('href', IRIS_BASE_PATH + '/case?cid='+ row['case_id']);
                         a_anchor.attr('target', '_blank');
                         a_anchor.attr('rel', 'noopener');
                         a_anchor.title="Go to case";
@@ -819,7 +820,7 @@ $(document).ready(function() {
             "render": function (data, type, row, meta) {
               if (type === 'display') {
                   let a_anchor = $('<a>');
-                    a_anchor.attr('href', `case/tasks?cid=${row['case_id']}&shared=${row['task_id']}`);
+                    a_anchor.attr('href', `${IRIS_BASE_PATH}/case/tasks?cid=${row['case_id']}&shared=${row['task_id']}`);
                     a_anchor.attr('target', '_blank');
                     a_anchor.attr('rel', 'noopener');
                     a_anchor.title="Go to task";
@@ -857,7 +858,7 @@ $(document).ready(function() {
             "render": function (data, type, row, meta) {
                 if (type === 'display') {
                     let a_anchor = $('<a>');
-                    a_anchor.attr('href', '/case?cid='+ row['case_id']);
+                    a_anchor.attr('href', IRIS_BASE_PATH + '/case?cid='+ row['case_id']);
                     a_anchor.text(data);
                     a_anchor.title="Go to case";
                     return a_anchor[0].outerHTML;

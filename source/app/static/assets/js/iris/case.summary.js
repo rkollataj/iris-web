@@ -119,7 +119,7 @@ function gen_report(safe) {
     if (safe === true) {
         url += '&safe=true';
     }
-    window.open(url, '_blank');
+    window.open(iris_with_base_path(url), '_blank');
 }
 
 function gen_act_report(safe) {
@@ -127,7 +127,7 @@ function gen_act_report(safe) {
     if (safe === true) {
         url += '&safe=true';
     }
-    window.open(url, '_blank');
+    window.open(iris_with_base_path(url), '_blank');
 }
 
 function act_report_template_selector() {
@@ -309,7 +309,7 @@ function case_detail(case_id, edit_mode=false) {
 }
 
 function manage_case(case_id) {
-   window.location = '/manage/cases?cid='+ case_id +'#view';
+   window.location = iris_with_base_path('/manage/cases?cid=' + case_id + '#view');
 }
 
 
@@ -514,4 +514,3 @@ $(document).ready(function() {
      });
 
 });
-

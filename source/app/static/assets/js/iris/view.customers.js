@@ -1,6 +1,7 @@
 let users_table = null;
 let cases_table = null;
 let assets_table = null;
+const IRIS_BASE_PATH = window.IRIS_BASE_PATH || "";
 
 function delete_contact(contact_id, customer_id) {
     post_request_api('/manage/customers/' + customer_id + '/contacts/' + contact_id + '/delete', null, true)
@@ -206,7 +207,7 @@ $(document).ready(function() {
                 "render": function(data, type, row) {
                     if (type === 'display' && data !== null) {
                         let a_anchor = $('<a></a>');
-                        a_anchor.attr('href', '/case?cid=' + data);
+                        a_anchor.attr('href', IRIS_BASE_PATH + '/case?cid=' + data);
                         a_anchor.attr('target', '_blank');
                         a_anchor.attr('rel', 'noopener');
                         a_anchor.text('#' + data);
@@ -248,7 +249,7 @@ $(document).ready(function() {
                 "render": function(data, type, row) {
                     if (type === 'display') {
                         let a_anchor = $('<a></a>');
-                        a_anchor.attr('href', '/case?cid=' + row['case_id']);
+                        a_anchor.attr('href', IRIS_BASE_PATH + '/case?cid=' + row['case_id']);
                         a_anchor.attr('target', '_blank');
                         a_anchor.attr('rel', 'noopener');
                         a_anchor.text(data);

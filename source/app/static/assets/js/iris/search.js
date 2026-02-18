@@ -7,6 +7,7 @@ $('#search_value').keypress(function(event){
         return false;
     }
 });
+const IRIS_BASE_PATH = window.IRIS_BASE_PATH || "";
 
 
 Table_1 = $("#file_search_table_1").DataTable({
@@ -40,7 +41,7 @@ Table_1 = $("#file_search_table_1").DataTable({
          "render": function (data, type, row, meta) {
             if (type === 'display') {
                 let a_anchor = $('<a>');
-                a_anchor.attr('href', 'case?cid=' + row["case_id"]);
+                a_anchor.attr('href', IRIS_BASE_PATH + '/case?cid=' + row["case_id"]);
                 a_anchor.attr('target', '_blank');
                 a_anchor.text(data);
                 return a_anchor[0].outerHTML;
@@ -102,7 +103,7 @@ Table_comments = $("#comments_search_table").DataTable({
       { "data": "case_name",
          "render": function (data, type, row, meta) {
             let a_anchor = $('<a>');
-            a_anchor.attr('href', 'case?cid=' + row["case_id"]);
+            a_anchor.attr('href', IRIS_BASE_PATH + '/case?cid=' + row["case_id"]);
             a_anchor.attr('target', '_blank');
             a_anchor.text(data);
             return a_anchor[0].outerHTML;
@@ -191,7 +192,7 @@ function search() {
 }
 
 function note_in_details(note_id, case_id) {
-    window.open("/case/notes?cid=" + case_id + "&shared=" + note_id);
+    window.open(IRIS_BASE_PATH + "/case/notes?cid=" + case_id + "&shared=" + note_id);
 
 }
 
