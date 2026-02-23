@@ -157,10 +157,18 @@ function get_case_ioc() {
                     if (!($.fn && typeof $.fn.popover === 'function')) {
                         return;
                     }
+                    let popoverTarget = $(e.target).closest('[data-toggle="popover"]');
+                    if (popoverTarget.length === 0) {
+                        return;
+                    }
+                    let hasPopoverContent = popoverTarget.attr('data-content') || popoverTarget.attr('title');
+                    if (!hasPopoverContent) {
+                        return;
+                    }
                     if($('.popover').length>1)
                         $('.popover').popover('hide');
-                        $(e.target).popover('toggle');
-                    });
+                    popoverTarget.popover('toggle');
+                });
 
                 $('#ioc_table_wrapper').show();
                 Table.columns.adjust().draw();
@@ -184,7 +192,12 @@ function get_case_ioc() {
                 });
 
                 if ($.fn && typeof $.fn.popover === 'function') {
-                    $('[data-toggle="popover"]').popover();
+                    $('#ioc_table_wrapper [data-toggle="popover"]').each(function() {
+                        let hasPopoverContent = $(this).attr('data-content') || $(this).attr('title');
+                        if (hasPopoverContent) {
+                            $(this).popover();
+                        }
+                    });
                 }
 
 
