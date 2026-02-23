@@ -37,7 +37,8 @@ app.config['timezone'] = 'Europe/Paris'
 # CONTENT ------------------------------------------------
 @task_prerun.connect
 def on_task_init(*args, **kwargs):
-    db.engine.dispose()
+    with app.app_context():
+        db.engine.dispose()
 
 
 def task_case_update(module, pipeline, pipeline_args, caseid):

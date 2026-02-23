@@ -266,12 +266,11 @@ class Config:
     MODULES_INTERFACE_MIN_VERSION = '1.1'
     MODULES_INTERFACE_MAX_VERSION = '1.2.0'
 
+    SECRET_KEY = config.load('IRIS', 'SECRET_KEY')
+    SECURITY_PASSWORD_SALT = config.load('IRIS', 'SECURITY_PASSWORD_SALT')
+
     if os.environ.get('IRIS_WORKER') is None:
         CSRF_ENABLED = True
-
-        SECRET_KEY = config.load('IRIS', 'SECRET_KEY')
-
-        SECURITY_PASSWORD_SALT = config.load('IRIS', 'SECURITY_PASSWORD_SALT')
 
         SECURITY_LOGIN_USER_TEMPLATE = 'login.html'
 
