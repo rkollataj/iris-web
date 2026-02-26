@@ -1261,7 +1261,13 @@ function load_menu_mod_options(data_type, table, deletion_fn, additionalOptions 
                         iconClass: 'fas fa-rocket',
                         contextMenuClasses: ['text-dark'],
                         action: function(rows, de, ke) {
-                            init_module_processing_wrap(rows, data_type, de[0].outerText);
+                            init_module_processing(
+                                rows,
+                                opt.hook_name,
+                                opt.manual_hook_ui_name,
+                                opt.module_name,
+                                data_type
+                            );
                         },
                     });
                 }
