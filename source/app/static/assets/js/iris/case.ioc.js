@@ -1,6 +1,8 @@
 /* reload the ioc table */
 var g_ioc_id = null;
 var g_ioc_desc_editor = null;
+var g_ioc_cortex_targets = [];
+var g_ioc_cortex_hooks = [];
 
 
 function reload_iocs() {
@@ -176,7 +178,18 @@ function get_case_ioc() {
                 // Do not let that block IOC row click/edit behavior.
                 if (typeof load_menu_mod_options === 'function') {
                     try {
-                        load_menu_mod_options('ioc', Table, delete_ioc);
+                        load_menu_mod_options('ioc', Table, delete_ioc, [
+                            {
+                                type: 'option',
+                                title: 'Run analyzers',
+                                multi: true,
+                                multiTitle: 'Run analyzers',
+                                iconClass: 'fas fa-rocket',
+                                action: function(rows) {
+                                    open_ioc_cortex_modal(rows);
+                                }
+                            }
+                        ]);
                     } catch (err) {
                         console.warn('Failed to load IOC contextual actions', err);
                     }
@@ -209,6 +222,108 @@ function get_case_ioc() {
             Table.clear().draw()
         }
     })
+}
+
+function parse_analyzers_list(rawInput) {
+    return [...new Set(
+        rawInput
+            .split(/[\n,]/)
+            .map(item => item.trim())
+            .filter(item => item.length > 0)
+    )];
+}
+
+function fill_ioc_cortex_hooks_selector(options) {
+    const selector = $('#ioc_cortex_hook_selector');
+    selector.empty();
+
+    if (!options || options.length === 0) {
+        selector.append(`<option value="">No IOC module action available</option>`);
+        selector.prop('disabled', true);
+        return;
+    }
+
+    selector.prop('disabled', false);
+
+    options.forEach((opt, index) => {
+        const label = `${opt.manual_hook_ui_name} (${opt.module_name})`;
+        selector.append(`<option value="${index}">${sanitizeHTML(label)}</option>`);
+    });
+
+    const preferredIndex = options.findIndex(opt => {
+        const hookLabel = (opt.manual_hook_ui_name || '').toLowerCase();
+        const moduleLabel = (opt.module_name || '').toLowerCase();
+        return hookLabel.includes('cortex') || moduleLabel.includes('cortex');
+    });
+
+    selector.val(String(preferredIndex >= 0 ? preferredIndex : 0));
+}
+
+function open_ioc_cortex_modal(rows) {
+    g_ioc_cortex_targets = rows.map(row => row.ioc_id).filter(id => id !== undefined && id !== null);
+    if (g_ioc_cortex_targets.length === 0) {
+        notify_error('No IOC selected');
+        return;
+    }
+
+    $('#ioc_cortex_target_count').text(`${g_ioc_cortex_targets.length} IOC(s) selected`);
+    $('#ioc_cortex_analyzers').val('');
+    $('#ioc_cortex_hook_selector').empty().prop('disabled', true);
+
+    get_request_api('/dim/hooks/options/ioc/list')
+        .done(function(data) {
+            if (!notify_auto_api(data, true)) {
+                return;
+            }
+
+            g_ioc_cortex_hooks = data.data || [];
+            fill_ioc_cortex_hooks_selector(g_ioc_cortex_hooks);
+            $('#modal_ioc_cortex_config').modal({ show: true });
+        });
+}
+
+function submit_ioc_cortex_run() {
+    if (g_ioc_cortex_targets.length === 0) {
+        notify_error('No IOC selected');
+        return;
+    }
+
+    const selectedIndex = $('#ioc_cortex_hook_selector').val();
+    if (selectedIndex === null || selectedIndex === '' || g_ioc_cortex_hooks.length === 0) {
+        notify_error('No module action selected');
+        return;
+    }
+
+    const selectedHook = g_ioc_cortex_hooks[parseInt(selectedIndex, 10)];
+    if (!selectedHook) {
+        notify_error('Invalid module action');
+        return;
+    }
+
+    const analyzers = parse_analyzers_list($('#ioc_cortex_analyzers').val() || '');
+    if (analyzers.length === 0) {
+        notify_error('Please provide at least one analyzer');
+        return;
+    }
+
+    const payload = {
+        hook_name: selectedHook.hook_name,
+        hook_ui_name: selectedHook.manual_hook_ui_name,
+        module_name: selectedHook.module_name,
+        csrf_token: $('#csrf_token').val(),
+        type: 'ioc',
+        targets: g_ioc_cortex_targets,
+        module_input: {
+            analyzers: analyzers
+        }
+    };
+
+    post_request_api('/dim/hooks/call-extended', JSON.stringify(payload), true)
+        .done(function(data) {
+            if (notify_auto_api(data)) {
+                $('#modal_ioc_cortex_config').modal('hide');
+            }
+        });
 }
 
 
@@ -512,4 +627,6 @@ $(document).ready(function(){
     if (shared_id) {
         edit_ioc(shared_id);
     }
+
+    $('#submit_ioc_cortex_run').on('click', submit_ioc_cortex_run);
 });

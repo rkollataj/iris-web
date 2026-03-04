@@ -458,6 +458,22 @@ def task_hook_wrapper(self, module_name, hook_name, hook_ui_name, data, init_use
             _obj = [deser_data]
 
         elif isinstance(deser_data, dict):
+            # Extended hook payloads can include a list of SQLA objects under "targets".
+            # Re-attach them in this task context so modules can safely consume them.
+            targets = deser_data.get('targets')
+            if isinstance(targets, list):
+                merged_targets = []
+                for target in targets:
+                    if isinstance(target, (str, int, dict)):
+                        merged_targets.append(target)
+                        continue
+
+                    obj = db.session.merge(target)
+                    db.session.commit()
+                    merged_targets.append(obj)
+
+                deser_data['targets'] = merged_targets
+
             _obj = [deser_data]
 
         else:
