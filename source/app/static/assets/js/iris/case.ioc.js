@@ -286,10 +286,10 @@ function render_ioc_cortex_analyzers_groups(analyzersMap) {
 
     iocTypes.forEach(iocType => {
         const analyzers = analyzersMap[iocType] || [];
-        const section = $('<div class="mb-3 border rounded p-2"></div>');
+        const section = $('<div class="mb-2"></div>');
 
         const header = $('<div class="d-flex justify-content-between align-items-center mb-1"></div>');
-        header.append($('<strong></strong>').text(`${iocType} analyzers`));
+        header.append($('<strong style="font-size:125%;"></strong>').text(`${iocType} analyzers`));
         header.append($('<span class="small"></span>'));
         section.append(header);
 
@@ -299,7 +299,7 @@ function render_ioc_cortex_analyzers_groups(analyzersMap) {
             return;
         }
 
-        const actions = $('<p class="mb-2 small"></p>');
+        const actions = $('<p class="mb-1 small"></p>');
         const selectAll = $('<a href="#" class="ioc-cortex-select-toggle" data-select="1">Select all</a>');
         selectAll.attr('data-ioc-type', iocType);
         const deselectAll = $('<a href="#" class="ioc-cortex-select-toggle" data-select="0">Deselect all</a>');
@@ -308,12 +308,13 @@ function render_ioc_cortex_analyzers_groups(analyzersMap) {
         section.append(actions);
 
         analyzers.forEach(analyzer => {
-            const row = $('<div class="form-check mb-1"></div>');
-            const input = $('<input class="form-check-input ioc-cortex-analyzer-cb" type="checkbox">');
+            const row = $('<div class="checkbox mb-0"></div>');
+            const label = $('<label class="mb-0"></label>');
+            const input = $('<input class="mr-xxs ioc-cortex-analyzer-cb" type="checkbox">');
             input.attr('data-ioc-type', iocType);
             input.val(analyzer.name);
-            const label = $('<label class="form-check-label"></label>').text(analyzer.name);
-            row.append(input).append(label);
+            label.append(input).append(document.createTextNode(` ${analyzer.name}`));
+            row.append(label);
             section.append(row);
         });
 
