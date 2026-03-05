@@ -3,6 +3,7 @@ var g_ioc_id = null;
 var g_ioc_desc_editor = null;
 var g_ioc_cortex_targets = [];
 var g_ioc_cortex_hooks = [];
+var g_ioc_cortex_selected_hook = null;
 
 
 function reload_iocs() {
@@ -224,17 +225,21 @@ function get_case_ioc() {
     })
 }
 
-function parse_analyzers_list(rawInput) {
-    return [...new Set(
-        rawInput
-            .split(/[\n,]/)
-            .map(item => item.trim())
-            .map(item => item.replace(/^-+\s*/, ''))
-            .filter(item => item.length > 0 && !item.startsWith('#'))
-    )];
+function get_preferred_cortex_hook(options) {
+    if (!options || options.length === 0) {
+        return null;
+    }
+
+    const preferredIndex = options.findIndex(opt => {
+        const hookLabel = (opt.manual_hook_ui_name || '').toLowerCase();
+        const moduleLabel = (opt.module_name || '').toLowerCase();
+        return hookLabel.includes('cortex') || moduleLabel.includes('cortex');
+    });
+
+    return options[preferredIndex >= 0 ? preferredIndex : 0];
 }
 
-function build_ioc_cortex_analyzers_text(cortexResponseData) {
+function build_ioc_cortex_analyzers_map(cortexResponseData) {
     const observables = (cortexResponseData && Array.isArray(cortexResponseData.observables))
         ? cortexResponseData.observables
         : [];
@@ -243,67 +248,97 @@ function build_ioc_cortex_analyzers_text(cortexResponseData) {
     observables.forEach(observable => {
         const iocType = (observable.ioc_type || 'unknown').toString();
         if (!analyzersByType[iocType]) {
-            analyzersByType[iocType] = new Set();
+            analyzersByType[iocType] = {};
         }
 
         (observable.analyzers || []).forEach(analyzer => {
             const analyzerName = (analyzer && (analyzer.name || analyzer.id))
                 ? String(analyzer.name || analyzer.id).trim()
                 : '';
-            if (analyzerName.length > 0) {
-                analyzersByType[iocType].add(analyzerName);
+            if (analyzerName.length === 0) {
+                return;
             }
+
+            analyzersByType[iocType][analyzerName] = {
+                name: analyzerName,
+                selected: false
+            };
         });
     });
 
-    const iocTypes = Object.keys(analyzersByType).sort((a, b) => a.localeCompare(b));
-    if (iocTypes.length === 0) {
-        return '# No analyzers available for selected IOCs';
-    }
-
-    const lines = [];
-    iocTypes.forEach((iocType, index) => {
-        lines.push(`# IOC type: ${iocType}`);
-
-        const analyzers = Array.from(analyzersByType[iocType]).sort((a, b) => a.localeCompare(b));
-        if (analyzers.length === 0) {
-            lines.push('# (none)');
-        } else {
-            lines.push(...analyzers);
-        }
-
-        if (index < iocTypes.length - 1) {
-            lines.push('');
-        }
+    const result = {};
+    Object.keys(analyzersByType).sort((a, b) => a.localeCompare(b)).forEach(iocType => {
+        result[iocType] = Object.values(analyzersByType[iocType]).sort((a, b) => a.name.localeCompare(b.name));
     });
 
-    return lines.join('\n');
+    return result;
 }
 
-function fill_ioc_cortex_hooks_selector(options) {
-    const selector = $('#ioc_cortex_hook_selector');
-    selector.empty();
+function render_ioc_cortex_analyzers_groups(analyzersMap) {
+    const container = $('#ioc_cortex_analyzers_groups');
+    container.empty();
 
-    if (!options || options.length === 0) {
-        selector.append(`<option value="">No IOC module action available</option>`);
-        selector.prop('disabled', true);
+    const iocTypes = Object.keys(analyzersMap || {});
+    if (iocTypes.length === 0) {
+        container.append('<p class="text-muted mb-0"><em>No Analyzer Available</em></p>');
         return;
     }
 
-    selector.prop('disabled', false);
+    iocTypes.forEach(iocType => {
+        const analyzers = analyzersMap[iocType] || [];
+        const section = $('<div class="mb-3 border rounded p-2"></div>');
 
-    options.forEach((opt, index) => {
-        const label = `${opt.manual_hook_ui_name} (${opt.module_name})`;
-        selector.append(`<option value="${index}">${sanitizeHTML(label)}</option>`);
+        const header = $('<div class="d-flex justify-content-between align-items-center mb-1"></div>');
+        header.append($('<strong></strong>').text(`${iocType} analyzers`));
+        header.append($('<span class="small"></span>'));
+        section.append(header);
+
+        if (analyzers.length === 0) {
+            section.append('<p class="text-muted mb-0"><em>No Analyzer Available</em></p>');
+            container.append(section);
+            return;
+        }
+
+        const actions = $('<p class="mb-2 small"></p>');
+        const selectAll = $('<a href="#" class="ioc-cortex-select-toggle" data-select="1">Select all</a>');
+        selectAll.attr('data-ioc-type', iocType);
+        const deselectAll = $('<a href="#" class="ioc-cortex-select-toggle" data-select="0">Deselect all</a>');
+        deselectAll.attr('data-ioc-type', iocType);
+        actions.append(selectAll).append(' / ').append(deselectAll);
+        section.append(actions);
+
+        analyzers.forEach(analyzer => {
+            const row = $('<div class="form-check mb-1"></div>');
+            const input = $('<input class="form-check-input ioc-cortex-analyzer-cb" type="checkbox">');
+            input.attr('data-ioc-type', iocType);
+            input.val(analyzer.name);
+            const label = $('<label class="form-check-label"></label>').text(analyzer.name);
+            row.append(input).append(label);
+            section.append(row);
+        });
+
+        container.append(section);
+    });
+}
+
+function set_ioc_cortex_select_all(iocType, selected) {
+    $('.ioc-cortex-analyzer-cb').each(function() {
+        if (String($(this).attr('data-ioc-type')) === String(iocType)) {
+            $(this).prop('checked', selected);
+        }
+    });
+}
+
+function get_selected_ioc_cortex_analyzers() {
+    const selected = new Set();
+    $('.ioc-cortex-analyzer-cb:checked').each(function() {
+        const name = ($(this).val() || '').toString().trim();
+        if (name.length > 0) {
+            selected.add(name);
+        }
     });
 
-    const preferredIndex = options.findIndex(opt => {
-        const hookLabel = (opt.manual_hook_ui_name || '').toLowerCase();
-        const moduleLabel = (opt.module_name || '').toLowerCase();
-        return hookLabel.includes('cortex') || moduleLabel.includes('cortex');
-    });
-
-    selector.val(String(preferredIndex >= 0 ? preferredIndex : 0));
+    return Array.from(selected);
 }
 
 function open_ioc_cortex_modal(rows) {
@@ -314,8 +349,7 @@ function open_ioc_cortex_modal(rows) {
     }
 
     $('#ioc_cortex_target_count').text(`${g_ioc_cortex_targets.length} IOC(s) selected`);
-    $('#ioc_cortex_analyzers').val('Loading analyzers from Cortex...').prop('disabled', true);
-    $('#ioc_cortex_hook_selector').empty().prop('disabled', true);
+    $('#ioc_cortex_analyzers_groups').html('<p class="text-muted mb-0">Loading analyzers from Cortex...</p>');
     $('#submit_ioc_cortex_run').prop('disabled', true);
 
     get_request_api('/dim/hooks/options/ioc/list')
@@ -325,7 +359,7 @@ function open_ioc_cortex_modal(rows) {
             }
 
             g_ioc_cortex_hooks = data.data || [];
-            fill_ioc_cortex_hooks_selector(g_ioc_cortex_hooks);
+            g_ioc_cortex_selected_hook = get_preferred_cortex_hook(g_ioc_cortex_hooks);
             $('#modal_ioc_cortex_config').modal({ show: true });
 
             const payload = {
@@ -337,15 +371,14 @@ function open_ioc_cortex_modal(rows) {
             post_request_api('/dim/hooks/cortex/analyzers', JSON.stringify(payload), true)
                 .done(function(cortexResponse) {
                     if (!notify_auto_api(cortexResponse, true)) {
-                        $('#ioc_cortex_analyzers').val('');
+                        $('#ioc_cortex_analyzers_groups').html('<p class="text-danger mb-0">Failed to load analyzers from Cortex</p>');
                         return;
                     }
 
-                    const analyzersText = build_ioc_cortex_analyzers_text(cortexResponse.data);
-                    $('#ioc_cortex_analyzers').val(analyzersText);
+                    const analyzersMap = build_ioc_cortex_analyzers_map(cortexResponse.data);
+                    render_ioc_cortex_analyzers_groups(analyzersMap);
                 })
                 .always(function() {
-                    $('#ioc_cortex_analyzers').prop('disabled', false);
                     $('#submit_ioc_cortex_run').prop('disabled', false);
                 });
         });
@@ -357,21 +390,20 @@ function submit_ioc_cortex_run() {
         return;
     }
 
-    const selectedIndex = $('#ioc_cortex_hook_selector').val();
-    if (selectedIndex === null || selectedIndex === '' || g_ioc_cortex_hooks.length === 0) {
+    if (!g_ioc_cortex_selected_hook) {
         notify_error('No module action selected');
         return;
     }
 
-    const selectedHook = g_ioc_cortex_hooks[parseInt(selectedIndex, 10)];
+    const selectedHook = g_ioc_cortex_selected_hook;
     if (!selectedHook) {
         notify_error('Invalid module action');
         return;
     }
 
-    const analyzers = parse_analyzers_list($('#ioc_cortex_analyzers').val() || '');
+    const analyzers = get_selected_ioc_cortex_analyzers();
     if (analyzers.length === 0) {
-        notify_error('Please provide at least one analyzer');
+        notify_error('Please select at least one analyzer');
         return;
     }
 
@@ -698,4 +730,10 @@ $(document).ready(function(){
     }
 
     $('#submit_ioc_cortex_run').on('click', submit_ioc_cortex_run);
+    $(document).on('click', '.ioc-cortex-select-toggle', function(event) {
+        event.preventDefault();
+        const iocType = $(this).data('ioc-type');
+        const select = $(this).data('select') === 1;
+        set_ioc_cortex_select_all(iocType, select);
+    });
 });
