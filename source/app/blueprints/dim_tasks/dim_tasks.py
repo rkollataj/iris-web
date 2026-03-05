@@ -174,24 +174,74 @@ def _query_cortex_analyzers(cortex_url, cortex_token, verify_tls):
 
 
 def _format_analyzer(analyzer):
-    if not isinstance(analyzer, dict):
-        analyzer = getattr(analyzer, '__dict__', {}) or {}
+    analyzer = _normalize_cortex_analyzer(analyzer)
+
+    analyzer_name = (
+        analyzer.get('name')
+        or analyzer.get('analyzerName')
+        or analyzer.get('analyzer_name')
+    )
+
+    analyzer_data_types = _extract_analyzer_data_types(analyzer)
 
     return {
         'id': analyzer.get('id') or analyzer.get('_id') or analyzer.get('analyzerDefinitionId'),
-        'name': analyzer.get('name'),
+        'name': analyzer_name,
         'version': analyzer.get('version'),
         'description': analyzer.get('description'),
-        'data_type_list': [str(data_type).lower() for data_type in (analyzer.get('dataTypeList') or [])]
+        'data_type_list': analyzer_data_types
     }
 
 
 def _matches_cortex_data_types(analyzer, expected_data_types):
-    analyzer_types = [str(data_type).lower() for data_type in (analyzer.get('dataTypeList') or [])]
+    analyzer = _normalize_cortex_analyzer(analyzer)
+    analyzer_types = _extract_analyzer_data_types(analyzer)
     if not analyzer_types:
         return False
 
     return any(expected in analyzer_types for expected in expected_data_types)
+
+
+def _normalize_cortex_analyzer(analyzer):
+    if isinstance(analyzer, dict):
+        return analyzer
+
+    if analyzer is None:
+        return {}
+
+    for attr in ('json', 'raw', 'data'):
+        value = getattr(analyzer, attr, None)
+        if callable(value):
+            try:
+                resolved = value()
+                if isinstance(resolved, dict):
+                    return resolved
+            except Exception:
+                continue
+        elif isinstance(value, dict):
+            return value
+
+    return getattr(analyzer, '__dict__', {}) or {}
+
+
+def _extract_analyzer_data_types(analyzer):
+    if not isinstance(analyzer, dict):
+        return []
+
+    candidates = (
+        analyzer.get('dataTypeList'),
+        analyzer.get('data_type_list'),
+        analyzer.get('dataTypes'),
+        analyzer.get('data_types')
+    )
+
+    for candidate in candidates:
+        if isinstance(candidate, list):
+            return [str(data_type).strip().lower() for data_type in candidate if str(data_type).strip()]
+        if isinstance(candidate, str) and candidate.strip():
+            return [candidate.strip().lower()]
+
+    return []
 
 
 def _resolve_hook_targets(caseid, data_type, targets):
@@ -413,9 +463,14 @@ def dim_hooks_list_cortex_analyzers(caseid):
     if obj_targets is None:
         return response_error(logs[0] if logs else 'Invalid target')
 
+    log.info(
+        f'Cortex analyzers request received: case={caseid}, targets={len(targets)}, resolved={len(obj_targets)}'
+    )
+
     cortex_url = current_app.config.get('CORTEX_URL')
     cortex_token = current_app.config.get('CORTEX_TOKEN')
     if not cortex_url or not cortex_token:
+        log.warning('Cortex analyzers request rejected: CORTEX_URL or CORTEX_TOKEN is missing')
         return response_error('Cortex is not configured. Set CORTEX_URL and CORTEX_TOKEN', status=503)
 
     verify_tls = current_app.config.get('TLS_ROOT_CA')
@@ -423,6 +478,8 @@ def dim_hooks_list_cortex_analyzers(caseid):
     if cortex_error:
         log.warning(f'Cortex analyzers lookup failed: {cortex_error}')
         return response_error(cortex_error, status=502)
+
+    log.info(f'Cortex analyzers fetched: count={len(all_analyzers)}')
 
     observables = []
     unique_analyzers = {}
@@ -458,6 +515,12 @@ def dim_hooks_list_cortex_analyzers(caseid):
         'analyzers_union': list(unique_analyzers.values()),
         'errors': logs
     }
+
+    log.info(
+        'Cortex analyzers response built: '
+        f'case={caseid}, observables={len(observables)}, union={len(response_data["analyzers_union"])}, '
+        f'resolve_errors={len(logs)}'
+    )
 
     return response_success('Fetched Cortex analyzers', data=response_data)
 
