@@ -41,6 +41,11 @@ The POSTGRES section has the following configurations:
 
 - `CELERY_BROKER` - The broker address used by [Celery](https://github.com/celery/celery)
 
+## CORTEX
+
+- `CORTEX_URL` - Base Cortex URL used by IRIS backend (for example `https://cortex.local`)
+- `CORTEX_TOKEN` - Cortex API token used by IRIS backend
+
 ## IRIS
 
 - `IRIS_SECRET_KEY` - The secret key used by Flask.

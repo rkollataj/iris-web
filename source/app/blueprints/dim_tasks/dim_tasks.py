@@ -17,9 +17,12 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import json
+import logging as log
 import os
 import pickle
+import inspect
 from flask import Blueprint
+from flask import current_app
 from flask import redirect
 from flask import render_template
 from flask import request
@@ -50,6 +53,7 @@ from app.util import ac_case_requires
 from app.util import ac_requires
 from app.util import response_error
 from app.util import response_success
+from cortex4py.api import Api
 from iris_interface.IrisInterfaceStatus import IIStatus
 
 dim_tasks_blueprint = Blueprint(
@@ -59,6 +63,135 @@ dim_tasks_blueprint = Blueprint(
 )
 
 basedir = os.path.abspath(os.path.dirname(app.__file__))
+
+
+def _normalize_ioc_type_name(type_name):
+    if not type_name:
+        return ''
+
+    return str(type_name).strip().lower().replace('_', '-')
+
+
+def _ioc_type_to_cortex_data_types(type_name):
+    normalized = _normalize_ioc_type_name(type_name)
+    if not normalized:
+        return []
+
+    mapping = {
+        'ip': ['ip'],
+        'ip-src': ['ip'],
+        'ip-dst': ['ip'],
+        'ipv4': ['ip'],
+        'ipv6': ['ip'],
+        'domain': ['domain', 'fqdn'],
+        'hostname': ['domain', 'fqdn'],
+        'fqdn': ['fqdn', 'domain'],
+        'url': ['url'],
+        'uri': ['url'],
+        'mail': ['mail'],
+        'email': ['mail'],
+        'mail-src': ['mail'],
+        'mail-dst': ['mail'],
+        'hash': ['hash'],
+        'md5': ['hash'],
+        'sha1': ['hash'],
+        'sha224': ['hash'],
+        'sha256': ['hash'],
+        'sha384': ['hash'],
+        'sha512': ['hash'],
+        'filename': ['filename'],
+        'file': ['file', 'filename']
+    }
+
+    return mapping.get(normalized, [normalized])
+
+
+def _extract_cortex_analyzers_payload(payload):
+    if isinstance(payload, list):
+        return payload
+
+    if isinstance(payload, dict):
+        for key in ('data', 'list', 'items'):
+            if isinstance(payload.get(key), list):
+                return payload.get(key)
+
+    # cortex4py can return API wrappers/objects; check common containers.
+    for attr in ('data', 'list', 'items'):
+        value = getattr(payload, attr, None)
+        if isinstance(value, list):
+            return value
+
+    return []
+
+
+def _query_cortex_analyzers(cortex_url, cortex_token, verify_tls):
+    init_signature = inspect.signature(Api.__init__)
+    init_params = init_signature.parameters
+
+    api_kwargs = {}
+    if 'verify_cert' in init_params:
+        api_kwargs['verify_cert'] = verify_tls
+    elif 'cert' in init_params:
+        api_kwargs['cert'] = verify_tls
+
+    try:
+        cortex_api = Api(cortex_url.rstrip('/'), cortex_token, **api_kwargs)
+    except Exception as init_err:
+        return [], f'Unable to initialize cortex4py client: {init_err}'
+
+    analyzers_api = getattr(cortex_api, 'analyzers', None)
+    if analyzers_api is None:
+        return [], 'cortex4py client does not expose analyzers API'
+
+    calls = [
+        ('find_all', [{'query': {}, 'range': 'all'}, {'query': {}}, {}, None]),
+        ('search', [{'query': {}, 'range': 'all'}, {'query': {}}, {}, None]),
+        ('list', [{}, None])
+    ]
+
+    last_error = 'Unable to fetch analyzers from Cortex using cortex4py'
+    for method_name, method_args in calls:
+        method = getattr(analyzers_api, method_name, None)
+        if method is None:
+            continue
+
+        try:
+            for method_arg in method_args:
+                if method_arg is None:
+                    payload = method()
+                else:
+                    payload = method(method_arg)
+
+                analyzers = _extract_cortex_analyzers_payload(payload)
+                if analyzers:
+                    return analyzers, None
+
+            last_error = 'Cortex returned no analyzers'
+        except Exception as method_err:
+            last_error = f'cortex4py call {method_name} failed: {method_err}'
+
+    return [], last_error
+
+
+def _format_analyzer(analyzer):
+    if not isinstance(analyzer, dict):
+        analyzer = getattr(analyzer, '__dict__', {}) or {}
+
+    return {
+        'id': analyzer.get('id') or analyzer.get('_id') or analyzer.get('analyzerDefinitionId'),
+        'name': analyzer.get('name'),
+        'version': analyzer.get('version'),
+        'description': analyzer.get('description'),
+        'data_type_list': [str(data_type).lower() for data_type in (analyzer.get('dataTypeList') or [])]
+    }
+
+
+def _matches_cortex_data_types(analyzer, expected_data_types):
+    analyzer_types = [str(data_type).lower() for data_type in (analyzer.get('dataTypeList') or [])]
+    if not analyzer_types:
+        return False
+
+    return any(expected in analyzer_types for expected in expected_data_types)
 
 
 def _resolve_hook_targets(caseid, data_type, targets):
@@ -259,6 +392,74 @@ def dim_hooks_call_extended(caseid):
                               data=logs)
 
     return response_success(f'Queued task with {index} objects')
+
+
+@dim_tasks_blueprint.route('/dim/hooks/cortex/analyzers', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def dim_hooks_list_cortex_analyzers(caseid):
+    js_data = request.json
+    if not js_data:
+        return response_error('Invalid data')
+
+    targets = js_data.get('targets')
+    if not targets:
+        return response_error('Missing targets')
+
+    data_type = js_data.get('type', 'ioc')
+    if data_type != 'ioc':
+        return response_error('Only ioc type is supported')
+
+    obj_targets, logs = _resolve_hook_targets(caseid, data_type, targets)
+    if obj_targets is None:
+        return response_error(logs[0] if logs else 'Invalid target')
+
+    cortex_url = current_app.config.get('CORTEX_URL')
+    cortex_token = current_app.config.get('CORTEX_TOKEN')
+    if not cortex_url or not cortex_token:
+        return response_error('Cortex is not configured. Set CORTEX_URL and CORTEX_TOKEN', status=503)
+
+    verify_tls = current_app.config.get('TLS_ROOT_CA')
+    all_analyzers, cortex_error = _query_cortex_analyzers(cortex_url, cortex_token, verify_tls)
+    if cortex_error:
+        log.warning(f'Cortex analyzers lookup failed: {cortex_error}')
+        return response_error(cortex_error, status=502)
+
+    observables = []
+    unique_analyzers = {}
+
+    for ioc in obj_targets:
+        expected_data_types = _ioc_type_to_cortex_data_types(
+            ioc.ioc_type.type_name if ioc.ioc_type else None
+        )
+
+        matched = []
+        if expected_data_types:
+            matched = [
+                _format_analyzer(analyzer)
+                for analyzer in all_analyzers
+                if _matches_cortex_data_types(analyzer, expected_data_types)
+            ]
+
+        for analyzer in matched:
+            analyzer_id = analyzer.get('id') or analyzer.get('name')
+            if analyzer_id:
+                unique_analyzers[analyzer_id] = analyzer
+
+        observables.append({
+            'ioc_id': ioc.ioc_id,
+            'ioc_value': ioc.ioc_value,
+            'ioc_type': ioc.ioc_type.type_name if ioc.ioc_type else None,
+            'expected_cortex_data_types': expected_data_types,
+            'analyzers': matched
+        })
+
+    response_data = {
+        'observables': observables,
+        'analyzers_union': list(unique_analyzers.values()),
+        'errors': logs
+    }
+
+    return response_success('Fetched Cortex analyzers', data=response_data)
 
 
 @dim_tasks_blueprint.route('/dim/tasks/list/<int:count>', methods=['GET'])

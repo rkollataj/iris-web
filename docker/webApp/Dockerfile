@@ -31,6 +31,7 @@ COPY source/dependencies /dependencies
 COPY source/requirements.txt /
 
 RUN pip3 install -r requirements.txt
+RUN pip3 install 'cortex4py~=2.1.0'
 
 ###############
 # BUILD IMAGE #

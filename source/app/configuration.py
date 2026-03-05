@@ -330,6 +330,9 @@ class Config:
 
     RELEASE_SIGNATURE_KEY = config.load('IRIS', 'RELEASE_SIGNATURE_KEY', fallback="dependencies/DFIR-IRIS_pkey.asc")
 
+    CORTEX_URL = config.load('CORTEX', 'URL', fallback=None)
+    CORTEX_TOKEN = config.load('CORTEX', 'TOKEN', fallback=None)
+
     PG_CLIENT_PATH = config.load('IRIS', 'PG_CLIENT_PATH', fallback="/usr/bin")
     ASSET_STORE_PATH = config.load('IRIS', 'ASSET_STORE_PATH', fallback="/home/iris/server_data/custom_assets")
     DATASTORE_PATH = config.load('IRIS', 'DATASTORE_PATH', fallback="/home/iris/server_data/datastore")

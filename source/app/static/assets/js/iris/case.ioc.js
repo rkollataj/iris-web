@@ -229,8 +229,55 @@ function parse_analyzers_list(rawInput) {
         rawInput
             .split(/[\n,]/)
             .map(item => item.trim())
-            .filter(item => item.length > 0)
+            .map(item => item.replace(/^-+\s*/, ''))
+            .filter(item => item.length > 0 && !item.startsWith('#'))
     )];
+}
+
+function build_ioc_cortex_analyzers_text(cortexResponseData) {
+    const observables = (cortexResponseData && Array.isArray(cortexResponseData.observables))
+        ? cortexResponseData.observables
+        : [];
+
+    const analyzersByType = {};
+    observables.forEach(observable => {
+        const iocType = (observable.ioc_type || 'unknown').toString();
+        if (!analyzersByType[iocType]) {
+            analyzersByType[iocType] = new Set();
+        }
+
+        (observable.analyzers || []).forEach(analyzer => {
+            const analyzerName = (analyzer && (analyzer.name || analyzer.id))
+                ? String(analyzer.name || analyzer.id).trim()
+                : '';
+            if (analyzerName.length > 0) {
+                analyzersByType[iocType].add(analyzerName);
+            }
+        });
+    });
+
+    const iocTypes = Object.keys(analyzersByType).sort((a, b) => a.localeCompare(b));
+    if (iocTypes.length === 0) {
+        return '# No analyzers available for selected IOCs';
+    }
+
+    const lines = [];
+    iocTypes.forEach((iocType, index) => {
+        lines.push(`# IOC type: ${iocType}`);
+
+        const analyzers = Array.from(analyzersByType[iocType]).sort((a, b) => a.localeCompare(b));
+        if (analyzers.length === 0) {
+            lines.push('# (none)');
+        } else {
+            lines.push(...analyzers);
+        }
+
+        if (index < iocTypes.length - 1) {
+            lines.push('');
+        }
+    });
+
+    return lines.join('\n');
 }
 
 function fill_ioc_cortex_hooks_selector(options) {
@@ -267,8 +314,9 @@ function open_ioc_cortex_modal(rows) {
     }
 
     $('#ioc_cortex_target_count').text(`${g_ioc_cortex_targets.length} IOC(s) selected`);
-    $('#ioc_cortex_analyzers').val('');
+    $('#ioc_cortex_analyzers').val('Loading analyzers from Cortex...').prop('disabled', true);
     $('#ioc_cortex_hook_selector').empty().prop('disabled', true);
+    $('#submit_ioc_cortex_run').prop('disabled', true);
 
     get_request_api('/dim/hooks/options/ioc/list')
         .done(function(data) {
@@ -279,6 +327,27 @@ function open_ioc_cortex_modal(rows) {
             g_ioc_cortex_hooks = data.data || [];
             fill_ioc_cortex_hooks_selector(g_ioc_cortex_hooks);
             $('#modal_ioc_cortex_config').modal({ show: true });
+
+            const payload = {
+                csrf_token: $('#csrf_token').val(),
+                type: 'ioc',
+                targets: g_ioc_cortex_targets
+            };
+
+            post_request_api('/dim/hooks/cortex/analyzers', JSON.stringify(payload), true)
+                .done(function(cortexResponse) {
+                    if (!notify_auto_api(cortexResponse, true)) {
+                        $('#ioc_cortex_analyzers').val('');
+                        return;
+                    }
+
+                    const analyzersText = build_ioc_cortex_analyzers_text(cortexResponse.data);
+                    $('#ioc_cortex_analyzers').val(analyzersText);
+                })
+                .always(function() {
+                    $('#ioc_cortex_analyzers').prop('disabled', false);
+                    $('#submit_ioc_cortex_run').prop('disabled', false);
+                });
         });
 }
 
