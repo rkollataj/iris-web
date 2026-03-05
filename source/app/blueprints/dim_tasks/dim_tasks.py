@@ -124,7 +124,7 @@ def _extract_cortex_analyzers_payload(payload):
     return []
 
 
-def _query_cortex_analyzers(cortex_url, cortex_token, verify_tls):
+def _get_cortex_client(cortex_url, cortex_token, verify_tls):
     init_signature = inspect.signature(Api.__init__)
     init_params = init_signature.parameters
 
@@ -137,40 +137,27 @@ def _query_cortex_analyzers(cortex_url, cortex_token, verify_tls):
     try:
         cortex_api = Api(cortex_url.rstrip('/'), cortex_token, **api_kwargs)
     except Exception as init_err:
-        return [], f'Unable to initialize cortex4py client: {init_err}'
+        return None, f'Unable to initialize cortex4py client: {init_err}'
 
-    analyzers_api = getattr(cortex_api, 'analyzers', None)
-    if analyzers_api is None:
-        return [], 'cortex4py client does not expose analyzers API'
+    try:
+        _ = cortex_api.analyzers
+    except Exception as analyzers_err:
+        return None, f'cortex4py client does not expose analyzers API: {analyzers_err}'
 
-    calls = [
-        ('find_all', [{'query': {}, 'range': 'all'}, {'query': {}}, {}, None]),
-        ('search', [{'query': {}, 'range': 'all'}, {'query': {}}, {}, None]),
-        ('list', [{}, None])
-    ]
+    if cortex_api.analyzers is None:
+        return None, 'cortex4py client does not expose analyzers API'
 
-    last_error = 'Unable to fetch analyzers from Cortex using cortex4py'
-    for method_name, method_args in calls:
-        method = getattr(analyzers_api, method_name, None)
-        if method is None:
-            continue
+    return cortex_api, None
 
-        try:
-            for method_arg in method_args:
-                if method_arg is None:
-                    payload = method()
-                else:
-                    payload = method(method_arg)
 
-                analyzers = _extract_cortex_analyzers_payload(payload)
-                if analyzers:
-                    return analyzers, None
+def _query_cortex_analyzers_by_type(cortex_api, cortex_data_type):
+    try:
+        payload = cortex_api.analyzers.get_by_type(cortex_data_type)
+    except Exception as method_err:
+        return [], f'cortex4py get_by_type({cortex_data_type}) failed: {method_err}'
 
-            last_error = 'Cortex returned no analyzers'
-        except Exception as method_err:
-            last_error = f'cortex4py call {method_name} failed: {method_err}'
-
-    return [], last_error
+    analyzers = _extract_cortex_analyzers_payload(payload)
+    return analyzers, None
 
 
 def _format_analyzer(analyzer):
@@ -191,15 +178,6 @@ def _format_analyzer(analyzer):
         'description': analyzer.get('description'),
         'data_type_list': analyzer_data_types
     }
-
-
-def _matches_cortex_data_types(analyzer, expected_data_types):
-    analyzer = _normalize_cortex_analyzer(analyzer)
-    analyzer_types = _extract_analyzer_data_types(analyzer)
-    if not analyzer_types:
-        return False
-
-    return any(expected in analyzer_types for expected in expected_data_types)
 
 
 def _normalize_cortex_analyzer(analyzer):
@@ -474,12 +452,28 @@ def dim_hooks_list_cortex_analyzers(caseid):
         return response_error('Cortex is not configured. Set CORTEX_URL and CORTEX_TOKEN', status=503)
 
     verify_tls = current_app.config.get('TLS_ROOT_CA')
-    all_analyzers, cortex_error = _query_cortex_analyzers(cortex_url, cortex_token, verify_tls)
+    cortex_api, cortex_error = _get_cortex_client(cortex_url, cortex_token, verify_tls)
     if cortex_error:
         log.warning(f'Cortex analyzers lookup failed: {cortex_error}')
         return response_error(cortex_error, status=502)
 
-    log.info(f'Cortex analyzers fetched: count={len(all_analyzers)}')
+    expected_type_set = set()
+    for ioc in obj_targets:
+        expected_type_set.update(
+            _ioc_type_to_cortex_data_types(ioc.ioc_type.type_name if ioc.ioc_type else None)
+        )
+
+    analyzers_by_cortex_type = {}
+    for cortex_type in sorted(expected_type_set):
+        type_analyzers, type_error = _query_cortex_analyzers_by_type(cortex_api, cortex_type)
+        if type_error:
+            log.warning(f'Cortex analyzers lookup failed: {type_error}')
+            return response_error(type_error, status=502)
+
+        analyzers_by_cortex_type[cortex_type] = type_analyzers
+        log.info(
+            f'Cortex analyzers received via get_by_type for type={cortex_type}: count={len(type_analyzers)}'
+        )
 
     observables = []
     unique_analyzers = {}
@@ -491,11 +485,18 @@ def dim_hooks_list_cortex_analyzers(caseid):
 
         matched = []
         if expected_data_types:
-            matched = [
-                _format_analyzer(analyzer)
-                for analyzer in all_analyzers
-                if _matches_cortex_data_types(analyzer, expected_data_types)
-            ]
+            type_matches = []
+            for expected_type in expected_data_types:
+                type_matches.extend(analyzers_by_cortex_type.get(expected_type, []))
+
+            dedup = {}
+            for analyzer in type_matches:
+                formatted = _format_analyzer(analyzer)
+                analyzer_key = formatted.get('id') or formatted.get('name')
+                if analyzer_key:
+                    dedup[analyzer_key] = formatted
+
+            matched = list(dedup.values())
 
         for analyzer in matched:
             analyzer_id = analyzer.get('id') or analyzer.get('name')
