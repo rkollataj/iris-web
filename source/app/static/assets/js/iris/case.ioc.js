@@ -307,6 +307,12 @@ function render_ioc_cortex_analyzers_groups(analyzersMap) {
         actions.append(selectAll).append(' / ').append(deselectAll);
         section.append(actions);
 
+        const list = $('<div class="ioc-cortex-checkbox-list"></div>');
+        list.css({
+            'margin-left': '12px'
+        });
+        section.append(list);
+
         analyzers.forEach(analyzer => {
             const row = $('<div class="checkbox mb-0"></div>');
             const label = $('<label class="mb-0" style="font-weight:400; line-height:1.25;"></label>');
@@ -315,11 +321,14 @@ function render_ioc_cortex_analyzers_groups(analyzersMap) {
             input.val(analyzer.name);
             input.css({
                 'vertical-align': 'text-bottom',
-                'margin-top': '0'
+                'margin-top': '0',
+                'position': 'relative',
+                'top': '-2px',
+                'margin-right': '4px'
             });
             label.append(input).append(document.createTextNode(` ${analyzer.name}`));
             row.append(label);
-            section.append(row);
+            list.append(row);
         });
 
         container.append(section);
