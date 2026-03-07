@@ -479,7 +479,7 @@ def dim_hooks_call_extended(caseid):
                         data=hook_data,
                         caseid=caseid,
                         module_name=module_name,
-                        analyzer_name=analyzer_name
+                        additional_info=f'{analyzer_name}({getattr(target, "ioc_value", "")})'
                     )
                     queued_tasks += 1
         else:
@@ -650,10 +650,10 @@ def list_dim_tasks(count):
                 submitted_at = kwargs.get('submitted_at')
                 if submitted_at:
                     tkp['date_done'] = submitted_at
-                analyzer_name = kwargs.get('analyzer_name')
                 task_name = f"{kwargs.get('module_name')}::{kwargs.get('hook_name')}"
-                if analyzer_name:
-                    task_name = f"{task_name}::{analyzer_name}"
+                additional_info = kwargs.get('additional_info')
+                if additional_info:
+                    task_name = f"{task_name}::{additional_info}"
 
         try:
             result = pickle.loads(row.result)
@@ -711,6 +711,7 @@ def task_status(task_id, caseid, url_redir):
             and ('task_hook_wrapper' in task_meta.get('name') or 'pipeline_dispatcher' in task_meta.get('name')):
         task_info['Module name'] = task_meta.get('kwargs').get('module_name')
         task_info['Hook name'] = task_meta.get('kwargs').get('hook_name')
+        task_info['Additional info'] = task_meta.get('kwargs').get('additional_info')
         task_info['User'] = task_meta.get('kwargs').get('init_user')
         task_info['Case ID'] = task_meta.get('kwargs').get('caseid')
 

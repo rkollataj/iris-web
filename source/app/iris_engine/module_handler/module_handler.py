@@ -415,7 +415,7 @@ def deregister_from_hook(module_id: int, iris_hook_name: str):
 
 
 @celery.task(bind=True)
-def task_hook_wrapper(self, module_name, hook_name, hook_ui_name, data, init_user, caseid, analyzer_name=None, submitted_at=None):
+def task_hook_wrapper(self, module_name, hook_name, hook_ui_name, data, init_user, caseid, submitted_at=None, additional_info=None):
     """
     Wrap a hook call into a Celery task to run asynchronously
 
@@ -514,7 +514,7 @@ def call_modules_hook(hook_name: str,
                       caseid: int = None,
                       hook_ui_name: str = None,
                       module_name: str = None,
-                      analyzer_name: str = None) -> any:
+                      additional_info: str = None) -> any:
     """
     Calls modules which have registered the specified hook
 
@@ -568,8 +568,8 @@ def call_modules_hook(hook_name: str,
             task_hook_wrapper.delay(module_name=module.module_name, hook_name=hook_name,
                                     hook_ui_name=module.manual_hook_ui_name, data=ser_data_auth.decode("utf8"),
                                     init_user=current_user.name, caseid=caseid,
-                                    analyzer_name=analyzer_name,
-                                    submitted_at=submitted_at)
+                                    submitted_at=submitted_at,
+                                    additional_info=additional_info)
 
         else:
             # Direct call. Should be fast
