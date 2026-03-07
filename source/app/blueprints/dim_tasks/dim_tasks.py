@@ -422,12 +422,17 @@ def dim_hooks_call_extended(caseid):
 
     if len(obj_targets) > 0:
         if split_per_ioc_analyzer:
+            is_run_analyzer_hook = (
+                hook_name == 'on_manual_trigger_ioc'
+                and str(hook_ui_name or '').strip().lower() in ('run analyzer', 'run analyzers')
+            )
+
             cleaned_analyzers_by_type = {}
             for raw_ioc_type, raw_list in (analyzers_by_ioc_type or {}).items():
                 if not isinstance(raw_list, list):
                     continue
 
-                ioc_type = str(raw_ioc_type).strip().lower()
+                ioc_type = _normalize_ioc_type_name(raw_ioc_type)
                 seen = set()
                 cleaned = []
                 for analyzer in raw_list:
@@ -456,14 +461,21 @@ def dim_hooks_call_extended(caseid):
                     'when split_per_ioc_analyzer is true'
                 )
 
+            # For the Cortex modal action, enforce type-aware analyzer mapping to avoid
+            # running analyzers selected for one IOC type on a different type.
+            if is_run_analyzer_hook and len(cleaned_analyzers_by_type) == 0:
+                return response_error(
+                    'Missing type-aware analyzer selection. Refresh page and select analyzers by IOC type.'
+                )
+
             queued_tasks = 0
             for target in obj_targets:
-                target_ioc_type = str(
+                target_ioc_type = _normalize_ioc_type_name(
                     target.ioc_type.type_name if getattr(target, 'ioc_type', None) else ''
-                ).strip().lower()
+                )
 
                 target_analyzers = cleaned_analyzers_by_type.get(target_ioc_type, [])
-                if not target_analyzers:
+                if not target_analyzers and not is_run_analyzer_hook:
                     target_analyzers = cleaned_fallback_analyzers
 
                 for analyzer_name in target_analyzers:
