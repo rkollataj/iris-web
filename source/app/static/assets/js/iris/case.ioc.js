@@ -230,12 +230,23 @@ function get_preferred_cortex_hook(options) {
         return null;
     }
 
-    const runAnalyzerIndex = options.findIndex(opt => {
+    const cortexInternalIndex = options.findIndex(opt => {
         const hookLabel = (opt.manual_hook_ui_name || '').toLowerCase().trim();
-        return hookLabel === 'run analyzer' || hookLabel === 'run analyzers';
+        const moduleLabel = (opt.module_name || '').toLowerCase().trim();
+        return hookLabel === '__internal_cortex_batch__' && moduleLabel === 'dreamlab_cortex_module';
     });
-    if (runAnalyzerIndex >= 0) {
-        return options[runAnalyzerIndex];
+    if (cortexInternalIndex >= 0) {
+        return options[cortexInternalIndex];
+    }
+
+    const cortexRunAnalyzerIndex = options.findIndex(opt => {
+        const hookLabel = (opt.manual_hook_ui_name || '').toLowerCase().trim();
+        const moduleLabel = (opt.module_name || '').toLowerCase().trim();
+        return (hookLabel === 'run analyzer' || hookLabel === 'run analyzers')
+            && moduleLabel === 'dreamlab_cortex_module';
+    });
+    if (cortexRunAnalyzerIndex >= 0) {
+        return options[cortexRunAnalyzerIndex];
     }
 
     const preferredIndex = options.findIndex(opt => {
@@ -430,9 +441,16 @@ function submit_ioc_cortex_run() {
         return;
     }
 
-    const selectedHook = g_ioc_cortex_selected_hook;
+    let selectedHook = g_ioc_cortex_selected_hook;
+    if (!selectedHook || String(selectedHook.module_name || '').trim() !== 'dreamlab_cortex_module') {
+        selectedHook = get_preferred_cortex_hook(g_ioc_cortex_hooks || []);
+    }
     if (!selectedHook) {
         notify_error('Invalid module action');
+        return;
+    }
+    if (String(selectedHook.module_name || '').trim() !== 'dreamlab_cortex_module') {
+        notify_error('Cortex hook was not found. Please refresh page.');
         return;
     }
 

@@ -419,12 +419,25 @@ def dim_hooks_call_extended(caseid):
 
     # For Cortex "Run analyzer" payloads, force one DIM task per IOC/analyzer pair
     # even if the UI did not send split_per_ioc_analyzer (e.g. stale browser cache).
-    if (module_input is not None
+    is_cortex_analyzer_batch = (module_input is not None
             and ((isinstance(analyzers, list) and len(analyzers) > 0)
                  or (isinstance(analyzers_by_ioc_type, dict) and len(analyzers_by_ioc_type) > 0))
             and hook_name == 'on_manual_trigger_ioc'
-            and str(hook_ui_name or '').strip().lower() in ('run analyzer', 'run analyzers')):
+            and str(hook_ui_name or '').strip().lower() in (
+                'run analyzer',
+                'run analyzers',
+                '__internal_cortex_batch__'
+            ))
+
+    if is_cortex_analyzer_batch:
         split_per_ioc_analyzer = True
+        # Safety net: analyzer batch execution must target Cortex module only.
+        if module_name and module_name != 'dreamlab_cortex_module':
+            return response_error(
+                f'Invalid module_name "{module_name}" for analyzer batch. '
+                'Expected dreamlab_cortex_module.'
+            )
+        module_name = 'dreamlab_cortex_module'
 
     if len(obj_targets) > 0:
         if split_per_ioc_analyzer:
