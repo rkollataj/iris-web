@@ -394,11 +394,15 @@ def dim_hooks_call_extended(caseid):
         return response_error('module_input must be a JSON object')
     split_per_ioc_analyzer = False
     analyzers = []
+    analyzers_by_ioc_type = {}
     if module_input is not None:
         split_per_ioc_analyzer = bool(module_input.get('split_per_ioc_analyzer', False))
         analyzers = module_input.get('analyzers', [])
         if analyzers is not None and not isinstance(analyzers, list):
             return response_error('module_input.analyzers must be an array')
+        analyzers_by_ioc_type = module_input.get('analyzers_by_ioc_type', {})
+        if analyzers_by_ioc_type is not None and not isinstance(analyzers_by_ioc_type, dict):
+            return response_error('module_input.analyzers_by_ioc_type must be an object')
 
     obj_targets, logs = _resolve_hook_targets(caseid, data_type, targets)
     if obj_targets is None:
@@ -410,29 +414,59 @@ def dim_hooks_call_extended(caseid):
     # For Cortex "Run analyzer" payloads, force one DIM task per IOC/analyzer pair
     # even if the UI did not send split_per_ioc_analyzer (e.g. stale browser cache).
     if (module_input is not None
-            and isinstance(analyzers, list)
-            and len(analyzers) > 0
+            and ((isinstance(analyzers, list) and len(analyzers) > 0)
+                 or (isinstance(analyzers_by_ioc_type, dict) and len(analyzers_by_ioc_type) > 0))
             and hook_name == 'on_manual_trigger_ioc'
             and str(hook_ui_name or '').strip().lower() in ('run analyzer', 'run analyzers')):
         split_per_ioc_analyzer = True
 
     if len(obj_targets) > 0:
         if split_per_ioc_analyzer:
-            cleaned_analyzers = []
-            seen = set()
+            cleaned_analyzers_by_type = {}
+            for raw_ioc_type, raw_list in (analyzers_by_ioc_type or {}).items():
+                if not isinstance(raw_list, list):
+                    continue
+
+                ioc_type = str(raw_ioc_type).strip().lower()
+                seen = set()
+                cleaned = []
+                for analyzer in raw_list:
+                    analyzer_name = str(analyzer).strip()
+                    if not analyzer_name or analyzer_name in seen:
+                        continue
+                    seen.add(analyzer_name)
+                    cleaned.append(analyzer_name)
+
+                if cleaned:
+                    cleaned_analyzers_by_type[ioc_type] = cleaned
+
+            # Backward compatibility for older payload shape: apply one global list to all IOC types.
+            cleaned_fallback_analyzers = []
+            seen_fallback = set()
             for analyzer in analyzers or []:
                 analyzer_name = str(analyzer).strip()
-                if not analyzer_name or analyzer_name in seen:
+                if not analyzer_name or analyzer_name in seen_fallback:
                     continue
-                seen.add(analyzer_name)
-                cleaned_analyzers.append(analyzer_name)
+                seen_fallback.add(analyzer_name)
+                cleaned_fallback_analyzers.append(analyzer_name)
 
-            if len(cleaned_analyzers) == 0:
-                return response_error('module_input.analyzers is required when split_per_ioc_analyzer is true')
+            if len(cleaned_analyzers_by_type) == 0 and len(cleaned_fallback_analyzers) == 0:
+                return response_error(
+                    'module_input.analyzers_by_ioc_type or module_input.analyzers is required '
+                    'when split_per_ioc_analyzer is true'
+                )
 
             queued_tasks = 0
             for target in obj_targets:
-                for analyzer_name in cleaned_analyzers:
+                target_ioc_type = str(
+                    target.ioc_type.type_name if getattr(target, 'ioc_type', None) else ''
+                ).strip().lower()
+
+                target_analyzers = cleaned_analyzers_by_type.get(target_ioc_type, [])
+                if not target_analyzers:
+                    target_analyzers = cleaned_fallback_analyzers
+
+                for analyzer_name in target_analyzers:
                     hook_data = {
                         'targets': [target],
                         'module_input': {

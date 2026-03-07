@@ -351,16 +351,25 @@ function set_ioc_cortex_select_all(iocType, selected) {
     });
 }
 
-function get_selected_ioc_cortex_analyzers() {
-    const selected = new Set();
+function get_selected_ioc_cortex_analyzers_by_type() {
+    const selectedByType = {};
     $('.ioc-cortex-analyzer-cb:checked').each(function() {
         const name = ($(this).val() || '').toString().trim();
+        const iocType = ($(this).attr('data-ioc-type') || '').toString().trim();
         if (name.length > 0) {
-            selected.add(name);
+            if (!selectedByType[iocType]) {
+                selectedByType[iocType] = new Set();
+            }
+            selectedByType[iocType].add(name);
         }
     });
 
-    return Array.from(selected);
+    const result = {};
+    Object.keys(selectedByType).forEach(iocType => {
+        result[iocType] = Array.from(selectedByType[iocType]);
+    });
+
+    return result;
 }
 
 function open_ioc_cortex_modal(rows) {
@@ -427,8 +436,8 @@ function submit_ioc_cortex_run() {
         return;
     }
 
-    const analyzers = get_selected_ioc_cortex_analyzers();
-    if (analyzers.length === 0) {
+    const analyzersByIocType = get_selected_ioc_cortex_analyzers_by_type();
+    if (Object.keys(analyzersByIocType).length === 0) {
         notify_error('Please select at least one analyzer');
         return;
     }
@@ -441,7 +450,7 @@ function submit_ioc_cortex_run() {
         type: 'ioc',
         targets: g_ioc_cortex_targets,
         module_input: {
-            analyzers: analyzers,
+            analyzers_by_ioc_type: analyzersByIocType,
             split_per_ioc_analyzer: true
         }
     };
