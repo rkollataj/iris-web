@@ -230,6 +230,14 @@ function get_preferred_cortex_hook(options) {
         return null;
     }
 
+    const runAnalyzerIndex = options.findIndex(opt => {
+        const hookLabel = (opt.manual_hook_ui_name || '').toLowerCase().trim();
+        return hookLabel === 'run analyzer' || hookLabel === 'run analyzers';
+    });
+    if (runAnalyzerIndex >= 0) {
+        return options[runAnalyzerIndex];
+    }
+
     const preferredIndex = options.findIndex(opt => {
         const hookLabel = (opt.manual_hook_ui_name || '').toLowerCase();
         const moduleLabel = (opt.module_name || '').toLowerCase();
@@ -374,6 +382,10 @@ function open_ioc_cortex_modal(rows) {
 
             g_ioc_cortex_hooks = data.data || [];
             g_ioc_cortex_selected_hook = get_preferred_cortex_hook(g_ioc_cortex_hooks);
+            if (!g_ioc_cortex_selected_hook) {
+                notify_error('No compatible "Run analyzer" module action found');
+                return;
+            }
             $('#modal_ioc_cortex_config').modal({ show: true });
 
             const payload = {
@@ -429,7 +441,8 @@ function submit_ioc_cortex_run() {
         type: 'ioc',
         targets: g_ioc_cortex_targets,
         module_input: {
-            analyzers: analyzers
+            analyzers: analyzers,
+            split_per_ioc_analyzer: true
         }
     };
 

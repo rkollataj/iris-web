@@ -392,34 +392,78 @@ def dim_hooks_call_extended(caseid):
     module_input = js_data.get('module_input')
     if module_input is not None and not isinstance(module_input, dict):
         return response_error('module_input must be a JSON object')
+    split_per_ioc_analyzer = False
+    analyzers = []
+    if module_input is not None:
+        split_per_ioc_analyzer = bool(module_input.get('split_per_ioc_analyzer', False))
+        analyzers = module_input.get('analyzers', [])
+        if analyzers is not None and not isinstance(analyzers, list):
+            return response_error('module_input.analyzers must be an array')
 
     obj_targets, logs = _resolve_hook_targets(caseid, data_type, targets)
     if obj_targets is None:
         return response_error(logs[0] if logs else 'Invalid target')
 
     index = len(obj_targets)
+    queued_tasks = index
 
     if len(obj_targets) > 0:
-        hook_data = obj_targets
-        if module_input is not None:
-            hook_data = {
-                'targets': obj_targets,
-                'module_input': module_input
-            }
+        if split_per_ioc_analyzer:
+            cleaned_analyzers = []
+            seen = set()
+            for analyzer in analyzers or []:
+                analyzer_name = str(analyzer).strip()
+                if not analyzer_name or analyzer_name in seen:
+                    continue
+                seen.add(analyzer_name)
+                cleaned_analyzers.append(analyzer_name)
 
-        call_modules_hook(
-            hook_name=hook_name,
-            hook_ui_name=hook_ui_name,
-            data=hook_data,
-            caseid=caseid,
-            module_name=module_name
-        )
+            if len(cleaned_analyzers) == 0:
+                return response_error('module_input.analyzers is required when split_per_ioc_analyzer is true')
+
+            queued_tasks = 0
+            for target in obj_targets:
+                for analyzer_name in cleaned_analyzers:
+                    hook_data = {
+                        'targets': [target],
+                        'module_input': {
+                            'analyzers': [analyzer_name]
+                        }
+                    }
+                    call_modules_hook(
+                        hook_name=hook_name,
+                        hook_ui_name=hook_ui_name,
+                        data=hook_data,
+                        caseid=caseid,
+                        module_name=module_name,
+                        task_label=(
+                            f'Cortex analyzer: '
+                            f'{str(getattr(target, "ioc_value", "unknown"))[:96]}'
+                            f' :: {analyzer_name}'
+                        )
+                    )
+                    queued_tasks += 1
+        else:
+            hook_data = obj_targets
+            if module_input is not None:
+                hook_data = {
+                    'targets': obj_targets,
+                    'module_input': module_input
+                }
+
+            call_modules_hook(
+                hook_name=hook_name,
+                hook_ui_name=hook_ui_name,
+                data=hook_data,
+                caseid=caseid,
+                module_name=module_name
+            )
 
     if len(logs) > 0:
-        return response_error(f"Errors encountered during processing of data. Queued task with {index} objects",
+        return response_error(f"Errors encountered during processing of data. Queued {queued_tasks} task(s)",
                               data=logs)
 
-    return response_success(f'Queued task with {index} objects')
+    return response_success(f'Queued {queued_tasks} task(s)')
 
 
 @dim_tasks_blueprint.route('/dim/hooks/cortex/analyzers', methods=['POST'])
@@ -564,7 +608,7 @@ def list_dim_tasks(count):
             if kwargs:
                 user = kwargs.get('init_user')
                 case_name = f"Case #{kwargs.get('caseid')}"
-                task_name = f"{kwargs.get('module_name')}::{kwargs.get('hook_name')}"
+                task_name = kwargs.get('task_label') or f"{kwargs.get('module_name')}::{kwargs.get('hook_name')}"
 
         try:
             result = pickle.loads(row.result)
@@ -622,6 +666,7 @@ def task_status(task_id, caseid, url_redir):
             and ('task_hook_wrapper' in task_meta.get('name') or 'pipeline_dispatcher' in task_meta.get('name')):
         task_info['Module name'] = task_meta.get('kwargs').get('module_name')
         task_info['Hook name'] = task_meta.get('kwargs').get('hook_name')
+        task_info['Task label'] = task_meta.get('kwargs').get('task_label')
         task_info['User'] = task_meta.get('kwargs').get('init_user')
         task_info['Case ID'] = task_meta.get('kwargs').get('caseid')
 

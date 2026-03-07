@@ -414,7 +414,7 @@ def deregister_from_hook(module_id: int, iris_hook_name: str):
 
 
 @celery.task(bind=True)
-def task_hook_wrapper(self, module_name, hook_name, hook_ui_name, data, init_user, caseid):
+def task_hook_wrapper(self, module_name, hook_name, hook_ui_name, data, init_user, caseid, task_label=None):
     """
     Wrap a hook call into a Celery task to run asynchronously
 
@@ -425,6 +425,7 @@ def task_hook_wrapper(self, module_name, hook_name, hook_ui_name, data, init_use
     :param data: Data associated to the hook to process
     :param init_user: User initiating the task
     :param caseid: Case associated
+    :param task_label: Optional user-facing label for DIM task list
     :return: A task status JSON task_success or task_failure
     """
     try:
@@ -508,7 +509,12 @@ def task_hook_wrapper(self, module_name, hook_name, hook_ui_name, data, init_use
     return task_status
 
 
-def call_modules_hook(hook_name: str, data: any, caseid: int = None, hook_ui_name: str = None, module_name: str = None) -> any:
+def call_modules_hook(hook_name: str,
+                      data: any,
+                      caseid: int = None,
+                      hook_ui_name: str = None,
+                      module_name: str = None,
+                      task_label: str = None) -> any:
     """
     Calls modules which have registered the specified hook
 
@@ -518,6 +524,7 @@ def call_modules_hook(hook_name: str, data: any, caseid: int = None, hook_ui_nam
     :param data: Data associated with the hook
     :param module_name: Name of the module to call. If None, all modules matching the hook will be called
     :param caseid: Case ID
+    :param task_label: Optional user-facing label for DIM task list
     :return: Any
     """
     hook = IrisHook.query.filter(IrisHook.hook_name == hook_name).first()
@@ -560,7 +567,7 @@ def call_modules_hook(hook_name: str, data: any, caseid: int = None, hook_ui_nam
             ser_data_auth = hmac_sign(ser_data) + b" " + ser_data
             task_hook_wrapper.delay(module_name=module.module_name, hook_name=hook_name,
                                     hook_ui_name=module.manual_hook_ui_name, data=ser_data_auth.decode("utf8"),
-                                    init_user=current_user.name, caseid=caseid)
+                                    init_user=current_user.name, caseid=caseid, task_label=task_label)
 
         else:
             # Direct call. Should be fast
