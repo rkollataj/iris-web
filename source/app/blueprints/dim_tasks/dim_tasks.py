@@ -21,8 +21,6 @@ import logging as log
 import os
 import pickle
 import inspect
-import ast
-from datetime import datetime, timezone
 from flask import Blueprint
 from flask import current_app
 from flask import redirect
@@ -65,99 +63,6 @@ dim_tasks_blueprint = Blueprint(
 )
 
 basedir = os.path.abspath(os.path.dirname(app.__file__))
-
-
-def _parse_celery_kwargs(raw_kwargs):
-    if raw_kwargs is None:
-        return {}
-
-    if isinstance(raw_kwargs, dict):
-        return raw_kwargs
-
-    if isinstance(raw_kwargs, bytes):
-        try:
-            raw_kwargs = raw_kwargs.decode('utf-8')
-        except Exception:
-            return {}
-
-    if isinstance(raw_kwargs, str):
-        if not raw_kwargs.strip():
-            return {}
-
-        try:
-            parsed = json.loads(raw_kwargs)
-            if isinstance(parsed, dict):
-                return parsed
-        except Exception:
-            pass
-
-        try:
-            parsed = ast.literal_eval(raw_kwargs)
-            if isinstance(parsed, dict):
-                return parsed
-        except Exception:
-            return {}
-
-    return {}
-
-
-def _build_task_display_name(kwargs_dict, fallback_name):
-    if not isinstance(kwargs_dict, dict):
-        return fallback_name
-
-    return kwargs_dict.get('task_label') or f"{kwargs_dict.get('module_name')}::{kwargs_dict.get('hook_name')}"
-
-
-def _collect_live_dim_tasks(existing_task_ids):
-    live_entries = []
-    try:
-        inspector = app.celery.control.inspect(timeout=1)
-        active = inspector.active() or {}
-        reserved = inspector.reserved() or {}
-        scheduled = inspector.scheduled() or {}
-    except Exception:
-        return live_entries
-
-    def add_entry(task_payload, state_name):
-        if not isinstance(task_payload, dict):
-            return
-
-        task_id = task_payload.get('id') or task_payload.get('task_id')
-        if not task_id or task_id in existing_task_ids:
-            return
-
-        task_name = task_payload.get('name', '')
-        if 'task_hook_wrapper' not in task_name and 'pipeline_dispatcher' not in task_name:
-            return
-
-        kwargs_dict = _parse_celery_kwargs(task_payload.get('kwargs'))
-        display_name = _build_task_display_name(kwargs_dict, task_name)
-        case_id = kwargs_dict.get('caseid')
-        user = kwargs_dict.get('init_user') or "Shadow Iris"
-
-        live_entries.append({
-            'state': state_name,
-            'case': f'Case #{case_id}' if case_id else "",
-            'module': display_name,
-            'task_id': task_id,
-            'date_done': datetime.now(timezone.utc),
-            'user': user
-        })
-        existing_task_ids.add(task_id)
-
-    for tasks_by_worker, state_name in (
-        (active, 'in_progress'),
-        (reserved, 'queued'),
-    ):
-        for worker_tasks in tasks_by_worker.values():
-            for task_payload in worker_tasks or []:
-                add_entry(task_payload, state_name)
-
-    for worker_tasks in (scheduled or {}).values():
-        for scheduled_entry in worker_tasks or []:
-            add_entry(scheduled_entry.get('request', {}), 'scheduled')
-
-    return live_entries
 
 
 def _normalize_ioc_type_name(type_name):
@@ -539,12 +444,7 @@ def dim_hooks_call_extended(caseid):
                         hook_ui_name=hook_ui_name,
                         data=hook_data,
                         caseid=caseid,
-                        module_name=module_name,
-                        task_label=(
-                            f'Cortex analyzer: '
-                            f'{str(getattr(target, "ioc_value", "unknown"))[:96]}'
-                            f' :: {analyzer_name}'
-                        )
+                        module_name=module_name
                     )
                     queued_tasks += 1
         else:
@@ -708,11 +608,11 @@ def list_dim_tasks(count):
         user = None
         case_name = None
         if row.kwargs and row.kwargs != b'{}':
-            kwargs = _parse_celery_kwargs(row.kwargs)
+            kwargs = json.loads(row.kwargs.decode('utf-8'))
             if kwargs:
                 user = kwargs.get('init_user')
                 case_name = f"Case #{kwargs.get('caseid')}"
-                task_name = _build_task_display_name(kwargs, task_name)
+                task_name = f"{kwargs.get('module_name')}::{kwargs.get('hook_name')}"
 
         try:
             result = pickle.loads(row.result)
@@ -733,10 +633,6 @@ def list_dim_tasks(count):
         tkp['case'] = case_name if case_name else ""
 
         data.append(tkp)
-
-    existing_task_ids = {row.get('task_id') for row in data if row.get('task_id')}
-    data.extend(_collect_live_dim_tasks(existing_task_ids))
-    data.sort(key=lambda row: row.get('date_done') or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
 
     return response_success("", data=data)
 
@@ -774,7 +670,6 @@ def task_status(task_id, caseid, url_redir):
             and ('task_hook_wrapper' in task_meta.get('name') or 'pipeline_dispatcher' in task_meta.get('name')):
         task_info['Module name'] = task_meta.get('kwargs').get('module_name')
         task_info['Hook name'] = task_meta.get('kwargs').get('hook_name')
-        task_info['Task label'] = task_meta.get('kwargs').get('task_label')
         task_info['User'] = task_meta.get('kwargs').get('init_user')
         task_info['Case ID'] = task_meta.get('kwargs').get('caseid')
 
