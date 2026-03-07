@@ -250,6 +250,7 @@ class CeleryConfig:
     result_extended = True
     result_serializer = "json"
     worker_pool_restarts = True
+    task_track_started = True
 
 
 # --------- APP ---------
