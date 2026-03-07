@@ -475,7 +475,15 @@ def task_hook_wrapper(self, module_name, hook_name, hook_ui_name, data, init_use
 
                 deser_data['targets'] = merged_targets
 
-            _obj = [deser_data]
+            # Backward compatibility: most legacy modules expect a list of model objects,
+            # not the extended {"targets", "module_input"} envelope.
+            # Keep envelope only for Cortex module that explicitly consumes it.
+            if module_name == 'dreamlab_cortex_module':
+                _obj = [deser_data]
+            elif isinstance(deser_data.get('targets'), list):
+                _obj = deser_data.get('targets')
+            else:
+                _obj = [deser_data]
 
         else:
             _obj_a = db.session.merge(deser_data)
