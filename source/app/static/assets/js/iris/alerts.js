@@ -874,6 +874,10 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
       menuOptionsHtmlAlert = '<div class="dropdown-divider"></div>';
       for (let index in menuOptions) {
         let opt = menuOptions[index];
+        const hookUiName = (opt.manual_hook_ui_name || '').toString();
+        if (hookUiName.startsWith('__internal_')) {
+          continue;
+        }
         menuOptionsHtmlAlert += `<a class="dropdown-item" href="javascript:void(0);" onclick='init_module_processing_alert(${alert.alert_id}, "${opt.hook_name}",`+
                     `"${opt.manual_hook_ui_name}","${opt.module_name}");return false;'><i class="fa fa-arrow-alt-circle-right mr-2"></i> ${opt.manual_hook_ui_name}</a>`
       }
@@ -1138,8 +1142,8 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                                                           <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
                                                         </button>
                                                         <div class="dropdown-menu" role="menu">
-                                                        ${ modulesOptionsIocReq.length === 0 ? `<a class="dropdown-item" href="javascript:void(0);"><i class="fas fa-rocket mr-2"></i> No module available</a>` :
-                                                          modulesOptionsIocReq.map((opt) => `
+                                                        ${ modulesOptionsIocReq.filter((opt) => !((opt.manual_hook_ui_name || '').toString().startsWith('__internal_'))).length === 0 ? `<a class="dropdown-item" href="javascript:void(0);"><i class="fas fa-rocket mr-2"></i> No module available</a>` :
+                                                          modulesOptionsIocReq.filter((opt) => !((opt.manual_hook_ui_name || '').toString().startsWith('__internal_'))).map((opt) => `
                                                                 <a class="dropdown-item" href="javascript:void(0);" onclick='init_module_processing([${ioc.ioc_id}], "${opt.hook_name}","${opt.manual_hook_ui_name}","${opt.module_name}", "ioc");return false;'><i class="fas fa-rocket mr-2"></i> ${opt.manual_hook_ui_name}</a>`
                                                             ).join('')
                                                         }
