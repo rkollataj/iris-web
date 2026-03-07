@@ -38,8 +38,11 @@ $(document).ready(function(){
           {  "data": "state",
             "render": function (data, type, row, meta) {
                 if (type === 'display') {
-                    if (data == 'success'){
+                    const state = (data || '').toString().toLowerCase();
+                    if (state === 'success'){
                         data = "<i class='fas fa-check text-success' title='success'></i>";
+                    } else if (state.includes('pending') || state.includes('started') || state.includes('received') || state.includes('retry') || state.includes('progress') || state.includes('queue')) {
+                        data = "<span title='in progress'>-</span>";
                     } else {
                         data = "<i class='fas fa-times text-danger' title='failure'></i>";
                     }
