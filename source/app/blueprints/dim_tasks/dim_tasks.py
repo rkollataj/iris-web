@@ -444,7 +444,8 @@ def dim_hooks_call_extended(caseid):
                         hook_ui_name=hook_ui_name,
                         data=hook_data,
                         caseid=caseid,
-                        module_name=module_name
+                        module_name=module_name,
+                        analyzer_name=analyzer_name
                     )
                     queued_tasks += 1
         else:
@@ -612,7 +613,13 @@ def list_dim_tasks(count):
             if kwargs:
                 user = kwargs.get('init_user')
                 case_name = f"Case #{kwargs.get('caseid')}"
+                submitted_at = kwargs.get('submitted_at')
+                if submitted_at:
+                    tkp['date_done'] = submitted_at
+                analyzer_name = kwargs.get('analyzer_name')
                 task_name = f"{kwargs.get('module_name')}::{kwargs.get('hook_name')}"
+                if analyzer_name:
+                    task_name = f"{task_name}::{analyzer_name}"
 
         try:
             result = pickle.loads(row.result)

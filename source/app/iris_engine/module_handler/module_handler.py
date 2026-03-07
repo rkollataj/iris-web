@@ -18,6 +18,7 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import traceback
+from datetime import datetime
 
 import base64
 import importlib
@@ -414,7 +415,7 @@ def deregister_from_hook(module_id: int, iris_hook_name: str):
 
 
 @celery.task(bind=True)
-def task_hook_wrapper(self, module_name, hook_name, hook_ui_name, data, init_user, caseid):
+def task_hook_wrapper(self, module_name, hook_name, hook_ui_name, data, init_user, caseid, analyzer_name=None, submitted_at=None):
     """
     Wrap a hook call into a Celery task to run asynchronously
 
@@ -512,7 +513,8 @@ def call_modules_hook(hook_name: str,
                       data: any,
                       caseid: int = None,
                       hook_ui_name: str = None,
-                      module_name: str = None) -> any:
+                      module_name: str = None,
+                      analyzer_name: str = None) -> any:
     """
     Calls modules which have registered the specified hook
 
@@ -562,9 +564,12 @@ def call_modules_hook(hook_name: str,
             # So pass a dumped instance and then rebuild on the task side
             ser_data = base64.b64encode(dumps(data))
             ser_data_auth = hmac_sign(ser_data) + b" " + ser_data
+            submitted_at = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
             task_hook_wrapper.delay(module_name=module.module_name, hook_name=hook_name,
                                     hook_ui_name=module.manual_hook_ui_name, data=ser_data_auth.decode("utf8"),
-                                    init_user=current_user.name, caseid=caseid)
+                                    init_user=current_user.name, caseid=caseid,
+                                    analyzer_name=analyzer_name,
+                                    submitted_at=submitted_at)
 
         else:
             # Direct call. Should be fast
