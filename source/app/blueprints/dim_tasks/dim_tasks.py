@@ -682,8 +682,12 @@ def list_dim_tasks(count):
     ).order_by(desc(CeleryTaskMeta.date_done)).limit(count).all()
 
     data = []
+    seen_task_ids = set()
 
     for row in tasks:
+        if row.task_id in seen_task_ids:
+            continue
+        seen_task_ids.add(row.task_id)
 
         tkp = {}
         tkp['state'] = row.status

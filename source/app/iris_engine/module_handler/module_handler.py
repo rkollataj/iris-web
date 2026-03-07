@@ -18,6 +18,8 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import traceback
+import json
+from datetime import datetime
 
 import base64
 import importlib
@@ -37,6 +39,7 @@ from app.datamgmt.iris_engine.modules_db import modules_list_pipelines
 from app.models import IrisHook
 from app.models import IrisModule
 from app.models import IrisModuleHook
+from app.models import CeleryTaskMeta
 from app.util import hmac_sign
 from app.util import hmac_verify
 from iris_interface import IrisInterfaceStatus as IStatus
@@ -565,9 +568,33 @@ def call_modules_hook(hook_name: str,
             # So pass a dumped instance and then rebuild on the task side
             ser_data = base64.b64encode(dumps(data))
             ser_data_auth = hmac_sign(ser_data) + b" " + ser_data
-            task_hook_wrapper.delay(module_name=module.module_name, hook_name=hook_name,
-                                    hook_ui_name=module.manual_hook_ui_name, data=ser_data_auth.decode("utf8"),
-                                    init_user=current_user.name, caseid=caseid, task_label=task_label)
+            async_res = task_hook_wrapper.delay(module_name=module.module_name, hook_name=hook_name,
+                                                hook_ui_name=module.manual_hook_ui_name, data=ser_data_auth.decode("utf8"),
+                                                init_user=current_user.name, caseid=caseid, task_label=task_label)
+            try:
+                existing = CeleryTaskMeta.query.filter(
+                    CeleryTaskMeta.task_id == async_res.id
+                ).first()
+                if not existing:
+                    placeholder = CeleryTaskMeta(
+                        task_id=async_res.id,
+                        status='PENDING',
+                        date_done=datetime.utcnow(),
+                        name=task_hook_wrapper.name,
+                        kwargs=json.dumps({
+                            'module_name': module.module_name,
+                            'hook_name': hook_name,
+                            'hook_ui_name': module.manual_hook_ui_name,
+                            'init_user': current_user.name,
+                            'caseid': caseid,
+                            'task_label': task_label
+                        }).encode('utf-8')
+                    )
+                    db.session.add(placeholder)
+                    db.session.commit()
+            except Exception as queue_err:
+                db.session.rollback()
+                log.warning(f'Unable to create pending CeleryTaskMeta placeholder for {async_res.id}: {queue_err}')
 
         else:
             # Direct call. Should be fast
