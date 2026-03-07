@@ -22,7 +22,7 @@ import os
 import pickle
 import inspect
 import ast
-from datetime import datetime, timezone
+from datetime import datetime
 from flask import Blueprint
 from flask import current_app
 from flask import redirect
@@ -140,7 +140,7 @@ def _collect_live_dim_tasks(existing_task_ids):
             'case': f'Case #{case_id}' if case_id else "",
             'module': display_name,
             'task_id': task_id,
-            'date_done': datetime.now(timezone.utc),
+            'date_done': datetime.utcnow(),
             'user': user
         })
         existing_task_ids.add(task_id)
@@ -736,7 +736,17 @@ def list_dim_tasks(count):
 
     existing_task_ids = {row.get('task_id') for row in data if row.get('task_id')}
     data.extend(_collect_live_dim_tasks(existing_task_ids))
-    data.sort(key=lambda row: row.get('date_done') or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
+    def _sort_key(row):
+        date_done = row.get('date_done')
+        if not isinstance(date_done, datetime):
+            return datetime.min
+
+        if date_done.tzinfo is not None:
+            return date_done.replace(tzinfo=None)
+
+        return date_done
+
+    data.sort(key=_sort_key, reverse=True)
 
     return response_success("", data=data)
 
