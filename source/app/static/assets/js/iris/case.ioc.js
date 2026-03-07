@@ -383,7 +383,7 @@ function open_ioc_cortex_modal(rows) {
     $('#ioc_cortex_analyzers_groups').html('<p class="text-muted mb-0">Loading analyzers from Cortex...</p>');
     $('#submit_ioc_cortex_run').prop('disabled', true);
 
-    get_request_api('/dim/hooks/options/ioc/list')
+    get_request_api('/dim/hooks/options/ioc/list?include_internal=1')
         .done(function(data) {
             if (!notify_auto_api(data, true)) {
                 return;

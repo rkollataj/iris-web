@@ -309,7 +309,9 @@ def dim_index(caseid: int, url_redir):
 @dim_tasks_blueprint.route('/dim/hooks/options/<hook_type>/list', methods=['GET'])
 @ac_api_requires()
 def list_dim_hook_options_ioc(hook_type):
-    mods_options = (IrisModuleHook.query.with_entities(
+    include_internal = str(request.args.get('include_internal', 'false')).strip().lower() in ('1', 'true', 'yes')
+
+    query = (IrisModuleHook.query.with_entities(
         IrisModuleHook.manual_hook_ui_name,
         IrisHook.hook_name,
         IrisModule.module_name
@@ -318,8 +320,12 @@ def list_dim_hook_options_ioc(hook_type):
         IrisModule.is_active == True
     )
     .join(IrisHook, IrisHook.id == IrisModuleHook.hook_id)
-    .join(IrisModule, IrisModule.id == IrisModuleHook.module_id)
-    .all())
+    .join(IrisModule, IrisModule.id == IrisModuleHook.module_id))
+
+    if not include_internal:
+        query = query.filter(~IrisModuleHook.manual_hook_ui_name.like('__internal_%'))
+
+    mods_options = query.all()
 
     data = [options._asdict() for options in mods_options]
 
