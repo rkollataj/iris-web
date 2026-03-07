@@ -18,8 +18,7 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import traceback
-import json
-from datetime import datetime
+import time
 
 import base64
 import importlib
@@ -30,6 +29,7 @@ from pickle import loads
 from sqlalchemy import and_
 
 from app import app
+from app import cache
 from app import celery
 from app import db
 from app.datamgmt.iris_engine.modules_db import get_module_config_from_hname
@@ -39,12 +39,12 @@ from app.datamgmt.iris_engine.modules_db import modules_list_pipelines
 from app.models import IrisHook
 from app.models import IrisModule
 from app.models import IrisModuleHook
-from app.models import CeleryTaskMeta
 from app.util import hmac_sign
 from app.util import hmac_verify
 from iris_interface import IrisInterfaceStatus as IStatus
 
 log = app.logger
+PENDING_TASK_CACHE_KEY = 'dim_pending_tasks'
 
 
 def check_module_compatibility(module_version):
@@ -572,29 +572,29 @@ def call_modules_hook(hook_name: str,
                                                 hook_ui_name=module.manual_hook_ui_name, data=ser_data_auth.decode("utf8"),
                                                 init_user=current_user.name, caseid=caseid, task_label=task_label)
             try:
-                existing = CeleryTaskMeta.query.filter(
-                    CeleryTaskMeta.task_id == async_res.id
-                ).first()
-                if not existing:
-                    placeholder = CeleryTaskMeta(
-                        task_id=async_res.id,
-                        status='PENDING',
-                        date_done=datetime.utcnow(),
-                        name=task_hook_wrapper.name,
-                        kwargs=json.dumps({
-                            'module_name': module.module_name,
-                            'hook_name': hook_name,
-                            'hook_ui_name': module.manual_hook_ui_name,
-                            'init_user': current_user.name,
-                            'caseid': caseid,
-                            'task_label': task_label
-                        }).encode('utf-8')
-                    )
-                    db.session.add(placeholder)
-                    db.session.commit()
+                pending_tasks = cache.get(PENDING_TASK_CACHE_KEY) or []
+                if not isinstance(pending_tasks, list):
+                    pending_tasks = []
+
+                pending_tasks = [task for task in pending_tasks if task.get('task_id') != async_res.id]
+                pending_tasks.append({
+                    'task_id': async_res.id,
+                    'module_name': module.module_name,
+                    'hook_name': hook_name,
+                    'hook_ui_name': module.manual_hook_ui_name,
+                    'init_user': current_user.name,
+                    'caseid': caseid,
+                    'task_label': task_label,
+                    'submitted_ts': time.time()
+                })
+
+                # Keep cache bounded in size
+                if len(pending_tasks) > 2000:
+                    pending_tasks = pending_tasks[-2000:]
+
+                cache.set(PENDING_TASK_CACHE_KEY, pending_tasks, timeout=24 * 3600)
             except Exception as queue_err:
-                db.session.rollback()
-                log.warning(f'Unable to create pending CeleryTaskMeta placeholder for {async_res.id}: {queue_err}')
+                log.warning(f'Unable to cache pending DIM task metadata for {async_res.id}: {queue_err}')
 
         else:
             # Direct call. Should be fast

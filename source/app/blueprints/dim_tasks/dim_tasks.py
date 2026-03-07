@@ -19,7 +19,6 @@
 import json
 import logging as log
 import os
-import pickle
 import inspect
 import ast
 from datetime import datetime
@@ -65,6 +64,7 @@ dim_tasks_blueprint = Blueprint(
 )
 
 basedir = os.path.abspath(os.path.dirname(app.__file__))
+PENDING_TASK_CACHE_KEY = 'dim_pending_tasks'
 
 
 def _parse_celery_kwargs(raw_kwargs):
@@ -157,6 +157,70 @@ def _collect_live_dim_tasks(existing_task_ids):
         for scheduled_entry in worker_tasks or []:
             add_entry(scheduled_entry.get('request', {}), 'scheduled')
 
+    return live_entries
+
+
+def _collect_cached_pending_tasks(existing_task_ids):
+    pending_entries = app.cache.get(PENDING_TASK_CACHE_KEY) or []
+    if not isinstance(pending_entries, list):
+        pending_entries = []
+
+    now_ts = datetime.utcnow().timestamp()
+    live_entries = []
+    kept_entries = []
+
+    for entry in pending_entries:
+        if not isinstance(entry, dict):
+            continue
+
+        task_id = entry.get('task_id')
+        if not task_id:
+            continue
+
+        submitted_ts = entry.get('submitted_ts') or now_ts
+        try:
+            submitted_ts = float(submitted_ts)
+        except (TypeError, ValueError):
+            submitted_ts = now_ts
+
+        task_state = str(app.celery.AsyncResult(task_id).state or 'PENDING').upper()
+        terminal = task_state in ('SUCCESS', 'FAILURE', 'REVOKED')
+
+        # Keep terminal entries shortly to bridge the delay until CeleryTaskMeta is persisted.
+        if (not terminal) or (now_ts - submitted_ts <= 900):
+            kept_entries.append(entry)
+
+        if task_id in existing_task_ids:
+            continue
+
+        if task_state in ('RECEIVED', 'STARTED'):
+            state = 'in_progress'
+        elif task_state == 'PENDING':
+            state = 'queued'
+        elif task_state == 'RETRY':
+            state = 'retry'
+        elif task_state == 'SUCCESS':
+            state = 'success'
+        elif task_state in ('FAILURE', 'REVOKED'):
+            state = 'failed'
+        else:
+            state = task_state.lower()
+
+        display_name = entry.get('task_label') or f"{entry.get('module_name')}::{entry.get('hook_name')}"
+        case_id = entry.get('caseid')
+        user = entry.get('init_user') or "Shadow Iris"
+
+        live_entries.append({
+            'state': state,
+            'case': f'Case #{case_id}' if case_id else "",
+            'module': display_name,
+            'task_id': task_id,
+            'date_done': datetime.utcfromtimestamp(submitted_ts),
+            'user': user
+        })
+        existing_task_ids.add(task_id)
+
+    app.cache.set(PENDING_TASK_CACHE_KEY, kept_entries, timeout=24 * 3600)
     return live_entries
 
 
@@ -718,20 +782,19 @@ def list_dim_tasks(count):
                 case_name = f"Case #{kwargs.get('caseid')}"
                 task_name = _build_task_display_name(kwargs, task_name)
 
-        try:
-            result = pickle.loads(row.result)
-        except:
-            result = None
-
-        if isinstance(result, IIStatus):
-            try:
-                success = result.is_success()
-            except:
-                success = None
+        row_status = str(row.status or '').upper()
+        if row_status == 'SUCCESS':
+            tkp['state'] = 'success'
+        elif row_status in ('STARTED', 'RECEIVED'):
+            tkp['state'] = 'in_progress'
+        elif row_status == 'PENDING':
+            tkp['state'] = 'queued'
+        elif row_status == 'RETRY':
+            tkp['state'] = 'retry'
+        elif row_status in ('FAILURE', 'REVOKED'):
+            tkp['state'] = 'failed'
         else:
-            success = None
-
-        tkp['state'] = "success" if success else str(row.result)
+            tkp['state'] = row_status.lower() if row_status else 'unknown'
         tkp['user'] = user if user else "Shadow Iris"
         tkp['module'] = task_name
         tkp['case'] = case_name if case_name else ""
@@ -739,6 +802,7 @@ def list_dim_tasks(count):
         data.append(tkp)
 
     existing_task_ids = {row.get('task_id') for row in data if row.get('task_id')}
+    data.extend(_collect_cached_pending_tasks(existing_task_ids))
     data.extend(_collect_live_dim_tasks(existing_task_ids))
     def _sort_key(row):
         date_done = row.get('date_done')
@@ -792,18 +856,22 @@ def task_status(task_id, caseid, url_redir):
         task_info['User'] = task_meta.get('kwargs').get('init_user')
         task_info['Case ID'] = task_meta.get('kwargs').get('caseid')
 
+    meta_status = str(task_meta.get('status') or task.state or '').upper()
     if isinstance(task.info, IIStatus):
         success = task.info.is_success()
         task_info['Logs'] = task.info.get_logs()
-
     else:
-        success = None
-        task_info['User'] = "Shadow Iris"
-        task_info['Logs'] = ['Task did not returned a valid IIStatus object']
+        success = meta_status == 'SUCCESS'
+        task_info['Logs'] = [f'No IIStatus payload available (backend status: {meta_status or "UNKNOWN"})']
 
     if task_meta.get('traceback'):
         task_info['Traceback'] = task.traceback
 
-    task_info['Success'] = "Success" if success else "Failure"
+    if success:
+        task_info['Success'] = "Success"
+    elif meta_status in ('PENDING', 'STARTED', 'RECEIVED', 'RETRY'):
+        task_info['Success'] = "In progress"
+    else:
+        task_info['Success'] = "Failure"
 
     return render_template("modal_task_info.html", data=task_info, task_id=task.id)
