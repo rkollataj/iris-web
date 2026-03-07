@@ -655,20 +655,29 @@ def list_dim_tasks(count):
                 if additional_info:
                     task_name = f"{task_name}::{additional_info}"
 
-        try:
-            result = pickle.loads(row.result)
-        except:
-            result = None
-
-        if isinstance(result, IIStatus):
+        row_status = str(row.status or '').upper()
+        if row_status == 'SUCCESS':
             try:
-                success = result.is_success()
-            except:
-                success = None
-        else:
-            success = None
+                result = pickle.loads(row.result)
+            except Exception:
+                result = None
 
-        tkp['state'] = "success" if success else str(row.result)
+            if isinstance(result, IIStatus):
+                try:
+                    success = result.is_success()
+                except Exception:
+                    success = True
+            else:
+                # Celery already marked the task as SUCCESS; keep state consistent
+                success = True
+
+            tkp['state'] = "success" if success else "failed"
+        elif row_status in ('PENDING', 'RECEIVED', 'STARTED', 'RETRY'):
+            tkp['state'] = row_status.lower()
+        elif row_status in ('FAILURE', 'REVOKED'):
+            tkp['state'] = 'failed'
+        else:
+            tkp['state'] = row_status.lower() if row_status else 'unknown'
         tkp['user'] = user if user else "Shadow Iris"
         tkp['module'] = task_name
         tkp['case'] = case_name if case_name else ""
